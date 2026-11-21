@@ -170,11 +170,12 @@ export default function GradeCraftPage() {
       setUser(authUser);
       localStorage.setItem('gradecraft_auth_user', JSON.stringify(authUser));
 
-      // Load user instances from Neon for this logged-in account
+      // 1. Fetch any existing instances under this user's email
       fetch(`/api/instances?userId=${encodeURIComponent(authUser.email)}`)
         .then(res => res.json())
-        .then(data => {
+        .then(async (data) => {
           if (data.instances && data.instances.length > 0) {
+            // User already has cloud rows in Neon: load them
             const userInstances: Record<string, Instance> = {};
             data.instances.forEach((row: any) => {
               const semData = typeof row.data_json === 'string' ? JSON.parse(row.data_json) : row.data_json;
@@ -190,13 +191,34 @@ export default function GradeCraftPage() {
             setInstances(userInstances);
             localStorage.setItem(`gradecraft_instances_v3_${authUser.email}`, JSON.stringify(userInstances));
             setActiveInstanceId(Object.keys(userInstances)[0] || 'medium');
+            setCloudStatus('Neon Cloud Synced');
           } else {
-            // New user account: seed default curriculum
-            const defaults = getDefaultInstances();
-            setInstances(defaults);
-            localStorage.setItem(`gradecraft_instances_v3_${authUser.email}`, JSON.stringify(defaults));
+            // 2. First-time sign-in: seamlessly MIGRATE existing pre-login instances (e.g. your 8.54 / Balanced / 9.0) to this user!
+            const instancesToMigrate = { ...instances };
+            setInstances(instancesToMigrate);
+            localStorage.setItem(`gradecraft_instances_v3_${authUser.email}`, JSON.stringify(instancesToMigrate));
+
+            // Sync all existing customized scenarios to Neon under the newly signed-in email
+            try {
+              const syncPromises = Object.values(instancesToMigrate).map(inst =>
+                fetch('/api/instances', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    id: inst.id,
+                    userId: authUser.email,
+                    name: inst.name,
+                    targetCgpa: inst.targetCgpa || 8.5,
+                    dataJson: inst.semesters,
+                  })
+                })
+              );
+              await Promise.all(syncPromises);
+              setCloudStatus('Neon Cloud Synced');
+            } catch {
+              setCloudStatus('Local Mode');
+            }
           }
-          setCloudStatus('Neon Cloud Synced');
         });
 
     } catch (err) {
@@ -490,24 +512,30 @@ export default function GradeCraftPage() {
 
             {/* Google Authentication Section */}
             {user ? (
-              <div className="flex items-center gap-2.5 bg-[#18181b] border border-white/15 px-3 py-1.5 rounded-xl">
+              <div className="flex items-center gap-2.5 bg-[#18181b] border border-white/20 px-3.5 py-1.5 rounded-xl shadow-md">
                 {user.picture ? (
-                  <img src={user.picture} alt={user.name} className="w-6 h-6 rounded-full border border-white/20" />
+                  <img 
+                    src={user.picture} 
+                    alt={user.name} 
+                    referrerPolicy="no-referrer"
+                    crossOrigin="anonymous"
+                    className="w-7 h-7 rounded-full border border-blue-400/50 object-cover shadow-sm" 
+                  />
                 ) : (
-                  <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-black">
+                  <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-xs font-black text-white shadow-sm">
                     {user.name.charAt(0).toUpperCase()}
                   </div>
                 )}
-                <div className="hidden sm:block text-left">
-                  <div className="text-xs font-bold text-white truncate max-w-[120px]">{user.name}</div>
-                  <div className="text-[10px] text-zinc-400 truncate max-w-[120px]">{user.email}</div>
+                <div className="text-left">
+                  <div className="text-xs font-extrabold text-white truncate max-w-[130px] leading-tight">{user.name}</div>
+                  <div className="text-[10px] text-zinc-300 font-medium truncate max-w-[130px] leading-tight">{user.email}</div>
                 </div>
                 <button
                   onClick={handleLogout}
-                  className="apple-pressable p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/10 transition"
+                  className="apple-pressable ml-1 p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/10 transition"
                   title="Sign out"
                 >
-                  <LogOut className="w-3.5 h-3.5" />
+                  <LogOut className="w-4 h-4" />
                 </button>
               </div>
             ) : (
