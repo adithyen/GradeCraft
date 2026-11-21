@@ -47,31 +47,53 @@ export default function GradeCraftPage() {
   const [newInstanceName, setNewInstanceName] = useState<string>('');
   const [targetCgpaInput, setTargetCgpaInput] = useState<string>('8.50');
 
-  // 1. Initial Load from LocalStorage or Defaults
+  // 1. Initial Load: Load local first, then automatically fetch and merge from Neon PostgreSQL
   useEffect(() => {
+    let localData: Record<string, Instance> = {};
     try {
       const saved = localStorage.getItem('gradecraft_instances_v2');
       if (saved) {
-        const parsed = JSON.parse(saved);
-        setInstances(parsed);
+        localData = JSON.parse(saved);
+        setInstances(localData);
       } else {
         const defaults = getDefaultInstances();
+        localData = defaults;
         setInstances(defaults);
-        localStorage.setItem('gradecraft_instances_v2', JSON.stringify(defaults));
       }
     } catch {
-      setInstances(getDefaultInstances());
+      localData = getDefaultInstances();
+      setInstances(localData);
     }
 
-    // Ping backend status
-    fetch('/api/status')
+    // Ping backend and fetch user instances from Neon PostgreSQL (cross-device & incognito sync!)
+    fetch('/api/instances?userId=adithyen_user')
       .then(res => res.json())
       .then(data => {
-        if (data.postgres?.status === 'online') {
+        if (data.instances && data.instances.length > 0) {
+          const cloudMap: Record<string, Instance> = { ...localData };
+          data.instances.forEach((row: any) => {
+            const semData = typeof row.data_json === 'string' ? JSON.parse(row.data_json) : row.data_json;
+            cloudMap[row.id] = {
+              id: row.id,
+              name: row.name,
+              targetCgpa: row.target_cgpa ? parseFloat(row.target_cgpa) : 8.5,
+              semesters: semData,
+              createdAt: row.updated_at || new Date().toISOString(),
+              updatedAt: row.updated_at || new Date().toISOString(),
+            };
+          });
+          setInstances(cloudMap);
+          try {
+            localStorage.setItem('gradecraft_instances_v2', JSON.stringify(cloudMap));
+          } catch {}
+          setCloudStatus('Neon Cloud Synced');
+        } else {
           setCloudStatus('Neon Cloud Ready');
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        setCloudStatus('Local Mode');
+      });
   }, []);
 
   // Save to LocalStorage on instance changes
@@ -248,29 +270,51 @@ export default function GradeCraftPage() {
   };
 
   const handleSyncToNeon = async () => {
-    if (!currentInstance) return;
     setIsCloudSyncing(true);
     setCloudStatus('Syncing to Neon...');
     try {
-      const res = await fetch('/api/instances', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: currentInstance.id,
-          userId: 'adithyen_user',
-          name: currentInstance.name,
-          targetCgpa: currentInstance.targetCgpa || 8.5,
-          dataJson: currentInstance.semesters,
+      // Sync ALL instances to Neon PostgreSQL in parallel
+      const syncPromises = Object.values(instances).map(inst => 
+        fetch('/api/instances', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: inst.id,
+            userId: 'adithyen_user',
+            name: inst.name,
+            targetCgpa: inst.targetCgpa || 8.5,
+            dataJson: inst.semesters,
+          })
         })
-      });
-      if (res.ok) {
-        setCloudStatus('Backed up to Neon');
-        setTimeout(() => setCloudStatus('Neon Cloud Synced'), 3000);
-      } else {
-        setCloudStatus('Sync Error');
+      );
+
+      await Promise.all(syncPromises);
+
+      // Verify and refresh latest state from Neon
+      const res = await fetch('/api/instances?userId=adithyen_user');
+      const data = await res.json();
+      if (data.instances && data.instances.length > 0) {
+        const cloudMap: Record<string, Instance> = { ...instances };
+        data.instances.forEach((row: any) => {
+          const semData = typeof row.data_json === 'string' ? JSON.parse(row.data_json) : row.data_json;
+          cloudMap[row.id] = {
+            id: row.id,
+            name: row.name,
+            targetCgpa: row.target_cgpa ? parseFloat(row.target_cgpa) : 8.5,
+            semesters: semData,
+            createdAt: row.updated_at || new Date().toISOString(),
+            updatedAt: row.updated_at || new Date().toISOString(),
+          };
+        });
+        setInstances(cloudMap);
+        try {
+          localStorage.setItem('gradecraft_instances_v2', JSON.stringify(cloudMap));
+        } catch {}
       }
+
+      setCloudStatus('Neon Cloud Synced');
     } catch {
-      setCloudStatus('Offline Mode (Local saved)');
+      setCloudStatus('Sync Error');
     } finally {
       setIsCloudSyncing(false);
     }
