@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     await sql.query(
       `INSERT INTO user_instances (id, user_id, name, target_cgpa, data_json, updated_at)
        VALUES ($1, $2, $3, $4, $5, NOW())
-       ON CONFLICT (id) DO UPDATE SET
+       ON CONFLICT (id, user_id) DO UPDATE SET
          name = EXCLUDED.name,
          target_cgpa = EXCLUDED.target_cgpa,
          data_json = EXCLUDED.data_json,

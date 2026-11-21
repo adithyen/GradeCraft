@@ -57,7 +57,22 @@ export default function GradeCraftPage() {
   const [showNewInstanceModal, setShowNewInstanceModal] = useState<boolean>(false);
   const [newInstanceName, setNewInstanceName] = useState<string>('');
   const [targetCgpaInput, setTargetCgpaInput] = useState<string>('8.50');
+  const [isEditingTarget, setIsEditingTarget] = useState<boolean>(false);
+  const [editingTargetVal, setEditingTargetVal] = useState<string>('');
   const googleBtnRef = useRef<HTMLDivElement>(null);
+
+  // Sync confirmation popup state when logging in with existing local data
+  const [syncPromptModal, setSyncPromptModal] = useState<{
+    show: boolean;
+    authUser: AuthUser | null;
+    cloudInstances: Record<string, Instance>;
+    localInstances: Record<string, Instance>;
+  }>({
+    show: false,
+    authUser: null,
+    cloudInstances: {},
+    localInstances: {},
+  });
 
   // 1. Initial Load: Restore user & load data from Neon or LocalStorage
   useEffect(() => {
@@ -170,16 +185,17 @@ export default function GradeCraftPage() {
       setUser(authUser);
       localStorage.setItem('gradecraft_auth_user', JSON.stringify(authUser));
 
-      // 1. Fetch any existing instances under this user's email
+      const localDataBeforeLogin = { ...instances };
+
+      // 1. Fetch any existing instances under this user's Google email from Neon
       fetch(`/api/instances?userId=${encodeURIComponent(authUser.email)}`)
         .then(res => res.json())
         .then(async (data) => {
+          const cloudMap: Record<string, Instance> = {};
           if (data.instances && data.instances.length > 0) {
-            // User already has cloud rows in Neon: load them
-            const userInstances: Record<string, Instance> = {};
             data.instances.forEach((row: any) => {
               const semData = typeof row.data_json === 'string' ? JSON.parse(row.data_json) : row.data_json;
-              userInstances[row.id] = {
+              cloudMap[row.id] = {
                 id: row.id,
                 name: row.name,
                 targetCgpa: row.target_cgpa ? parseFloat(row.target_cgpa) : 8.5,
@@ -188,36 +204,24 @@ export default function GradeCraftPage() {
                 updatedAt: row.updated_at || new Date().toISOString(),
               };
             });
-            setInstances(userInstances);
-            localStorage.setItem(`gradecraft_instances_v3_${authUser.email}`, JSON.stringify(userInstances));
-            setActiveInstanceId(Object.keys(userInstances)[0] || 'medium');
-            setCloudStatus('Neon Cloud Synced');
-          } else {
-            // 2. First-time sign-in: seamlessly MIGRATE existing pre-login instances (e.g. your 8.54 / Balanced / 9.0) to this user!
-            const instancesToMigrate = { ...instances };
-            setInstances(instancesToMigrate);
-            localStorage.setItem(`gradecraft_instances_v3_${authUser.email}`, JSON.stringify(instancesToMigrate));
+          }
 
-            // Sync all existing customized scenarios to Neon under the newly signed-in email
-            try {
-              const syncPromises = Object.values(instancesToMigrate).map(inst =>
-                fetch('/api/instances', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({
-                    id: inst.id,
-                    userId: authUser.email,
-                    name: inst.name,
-                    targetCgpa: inst.targetCgpa || 8.5,
-                    dataJson: inst.semesters,
-                  })
-                })
-              );
-              await Promise.all(syncPromises);
-              setCloudStatus('Neon Cloud Synced');
-            } catch {
-              setCloudStatus('Local Mode');
-            }
+          const hasLocalData = Object.keys(localDataBeforeLogin).length > 0;
+
+          // If there is local data, ask the user with a confirmation popup whether to sync local data to their Google account
+          if (hasLocalData) {
+            setSyncPromptModal({
+              show: true,
+              authUser,
+              cloudInstances: cloudMap,
+              localInstances: localDataBeforeLogin,
+            });
+          } else if (Object.keys(cloudMap).length > 0) {
+            // No local data, directly apply cloud data
+            setInstances(cloudMap);
+            localStorage.setItem(`gradecraft_instances_v3_${authUser.email}`, JSON.stringify(cloudMap));
+            setActiveInstanceId(Object.keys(cloudMap)[0] || 'medium');
+            setCloudStatus('Neon Cloud Synced');
           }
         });
 
@@ -233,6 +237,60 @@ export default function GradeCraftPage() {
     setInstances(guestData);
     setActiveInstanceId('medium');
     setCloudStatus('Local Mode');
+  };
+
+  // User confirmed to sync local data to their Google Account
+  const handleConfirmSyncLocalToGoogle = async () => {
+    const { authUser, localInstances } = syncPromptModal;
+    if (!authUser) return;
+
+    setSyncPromptModal(prev => ({ ...prev, show: false }));
+    setIsCloudSyncing(true);
+    setCloudStatus('Syncing Local to Google...');
+
+    try {
+      setInstances(localInstances);
+      localStorage.setItem(`gradecraft_instances_v3_${authUser.email}`, JSON.stringify(localInstances));
+      setActiveInstanceId(Object.keys(localInstances)[0] || 'medium');
+
+      // Upload local instances to Neon under the Google email
+      const syncPromises = Object.values(localInstances).map(inst =>
+        fetch('/api/instances', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: inst.id,
+            userId: authUser.email,
+            name: inst.name,
+            targetCgpa: inst.targetCgpa || 8.5,
+            dataJson: inst.semesters,
+          }),
+        })
+      );
+      await Promise.all(syncPromises);
+      setCloudStatus('Neon Cloud Synced');
+    } catch {
+      setCloudStatus('Sync Error');
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  };
+
+  // User chose to keep/load the Google account's existing cloud data instead of local
+  const handleKeepGoogleCloudData = () => {
+    const { authUser, cloudInstances } = syncPromptModal;
+    if (!authUser) return;
+
+    setSyncPromptModal(prev => ({ ...prev, show: false }));
+
+    if (Object.keys(cloudInstances).length > 0) {
+      setInstances(cloudInstances);
+      localStorage.setItem(`gradecraft_instances_v3_${authUser.email}`, JSON.stringify(cloudInstances));
+      setActiveInstanceId(Object.keys(cloudInstances)[0] || 'medium');
+      setCloudStatus('Neon Cloud Synced');
+    } else {
+      setCloudStatus('Neon Cloud Ready');
+    }
   };
 
   // Save to LocalStorage on instance changes
@@ -381,6 +439,16 @@ export default function GradeCraftPage() {
     setActiveInstanceId(id);
     setNewInstanceName('');
     setShowNewInstanceModal(false);
+  };
+
+  const handleSaveTarget = () => {
+    if (!currentInstance) return;
+    const val = parseFloat(editingTargetVal);
+    if (isNaN(val) || val < 0 || val > 10) return;
+    const updated = JSON.parse(JSON.stringify(instances));
+    updated[activeInstanceId].targetCgpa = val;
+    saveInstances(updated);
+    setIsEditingTarget(false);
   };
 
   const handleDuplicateInstance = () => {
@@ -640,17 +708,67 @@ export default function GradeCraftPage() {
             </div>
 
             {/* Metric 4: Goal Planner & Status */}
-            <div className="space-y-1.5 bg-[#121214] p-5 rounded-2xl border border-white/[0.08]">
+            <div className="space-y-1.5 bg-[#121214] p-5 rounded-2xl border border-white/[0.08] relative group">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-extrabold uppercase tracking-wider text-zinc-300">Target Goal</span>
-                <span className="px-2 py-0.5 rounded-md bg-sky-500/20 text-sky-300 text-xs font-extrabold border border-sky-500/30">
-                  Goal {(currentInstance?.targetCgpa || 8.5).toFixed(2)}
-                </span>
+                {isEditingTarget ? (
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={handleSaveTarget}
+                      className="px-2 py-0.5 rounded bg-emerald-500 text-black text-xs font-black"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setIsEditingTarget(false)}
+                      className="px-2 py-0.5 rounded bg-zinc-700 text-zinc-300 text-xs font-bold"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setEditingTargetVal((currentInstance?.targetCgpa || 8.5).toFixed(2));
+                      setIsEditingTarget(true);
+                    }}
+                    className="apple-pressable px-2 py-0.5 rounded-md bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 text-xs font-extrabold border border-sky-500/30 flex items-center gap-1"
+                    title="Click to edit target CGPA goal"
+                  >
+                    <span>Edit Goal</span>
+                    <span className="text-[10px]">✎</span>
+                  </button>
+                )}
               </div>
-              <div className="text-5xl sm:text-6xl font-black tracking-tight text-sky-400 tabular-nums">
-                {(currentInstance?.targetCgpa || 8.5).toFixed(2)}
-              </div>
-              <p className="text-sm font-bold">
+
+              {isEditingTarget ? (
+                <div className="pt-2">
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="1"
+                    max="10"
+                    value={editingTargetVal}
+                    onChange={(e) => setEditingTargetVal(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleSaveTarget(); }}
+                    autoFocus
+                    className="w-full bg-[#27272a] text-sky-400 font-black text-3xl px-3 py-1.5 rounded-xl border-2 border-sky-500 focus:outline-none"
+                  />
+                </div>
+              ) : (
+                <div 
+                  onClick={() => {
+                    setEditingTargetVal((currentInstance?.targetCgpa || 8.5).toFixed(2));
+                    setIsEditingTarget(true);
+                  }}
+                  className="text-5xl sm:text-6xl font-black tracking-tight text-sky-400 tabular-nums cursor-pointer hover:opacity-90"
+                  title="Click to edit target goal"
+                >
+                  {(currentInstance?.targetCgpa || 8.5).toFixed(2)}
+                </div>
+              )}
+
+              <p className="text-sm font-bold pt-1">
                 {cumulativeMetrics.cgpa >= (currentInstance?.targetCgpa || 8.5) 
                   ? <span className="text-emerald-400 font-extrabold">✓ Exceeding Goal (+{(cumulativeMetrics.cgpa - (currentInstance?.targetCgpa || 8.5)).toFixed(2)})</span> 
                   : <span className="text-amber-400 font-extrabold">Goal Delta: -{((currentInstance?.targetCgpa || 8.5) - cumulativeMetrics.cgpa).toFixed(2)}</span>}
@@ -1102,6 +1220,48 @@ export default function GradeCraftPage() {
                 className="apple-pressable px-5 py-2.5 rounded-xl text-xs font-extrabold bg-blue-600 hover:bg-blue-500 text-white shadow-lg"
               >
                 Create Scenario
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. SYNC LOCAL DATA TO GOOGLE ACCOUNT CONFIRMATION MODAL */}
+      {syncPromptModal.show && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="bg-[#18181b] border border-white/20 rounded-3xl p-6 sm:p-7 w-full max-w-md shadow-2xl space-y-5 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                <Cloud className="w-5 h-5 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-white">Sync Local Data to Google Account?</h3>
+                <p className="text-xs text-zinc-400">Account: {syncPromptModal.authUser?.email}</p>
+              </div>
+            </div>
+
+            <div className="bg-[#27272a] rounded-2xl p-4 border border-white/10 text-xs text-zinc-200 leading-relaxed space-y-2">
+              <p>
+                We found active local semester scenarios configured on this browser.
+              </p>
+              <p className="text-zinc-400">
+                Would you like to sync and upload your current <strong className="text-white">local data</strong> to your Google Account on Neon Cloud, or <strong className="text-white">keep the existing cloud data</strong>?
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                onClick={handleKeepGoogleCloudData}
+                className="apple-pressable px-4 py-2.5 rounded-xl text-xs font-bold bg-[#27272a] hover:bg-white/10 text-zinc-300 hover:text-white transition border border-white/10"
+              >
+                Keep Cloud Data
+              </button>
+              <button
+                onClick={handleConfirmSyncLocalToGoogle}
+                className="apple-pressable px-5 py-2.5 rounded-xl text-xs font-extrabold bg-blue-600 hover:bg-blue-500 text-white shadow-lg transition flex items-center gap-2"
+              >
+                <Cloud className="w-3.5 h-3.5" />
+                Sync Local to Google
               </button>
             </div>
           </div>
