@@ -113,6 +113,8 @@ export default function GradeCraftPage() {
           const cloudMap: Record<string, Instance> = { ...localData };
           data.instances.forEach((row: any) => {
             const semData = typeof row.data_json === 'string' ? JSON.parse(row.data_json) : row.data_json;
+            // Guard against corrupted or dummy rows that don't have KTU semester structure
+            if (!semData || !semData[1] || !semData[1].courses) return;
             cloudMap[row.id] = {
               id: row.id,
               name: row.name,
@@ -127,6 +129,8 @@ export default function GradeCraftPage() {
             localStorage.setItem(storageKey, JSON.stringify(cloudMap));
           } catch {}
           setCloudStatus('Neon Cloud Synced');
+          // If activeInstanceId is missing or corrupted, snap to 'medium' or first valid scenario
+          setActiveInstanceId(prev => (cloudMap[prev] ? prev : Object.keys(cloudMap)[0] || 'medium'));
         } else {
           setCloudStatus('Neon Cloud Ready');
         }
@@ -195,6 +199,7 @@ export default function GradeCraftPage() {
           if (data.instances && data.instances.length > 0) {
             data.instances.forEach((row: any) => {
               const semData = typeof row.data_json === 'string' ? JSON.parse(row.data_json) : row.data_json;
+              if (!semData || !semData[1] || !semData[1].courses) return;
               cloudMap[row.id] = {
                 id: row.id,
                 name: row.name,
