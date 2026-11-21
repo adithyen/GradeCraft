@@ -93,8 +93,15 @@ export default function GradeCraftPage() {
     try {
       const saved = localStorage.getItem(storageKey);
       if (saved) {
-        localData = JSON.parse(saved);
-        setInstances(localData);
+        const parsed = JSON.parse(saved);
+        // Verify parsed local data has valid semesters structure
+        if (parsed && typeof parsed === 'object' && Object.values(parsed).some((inst: any) => inst?.semesters && inst?.semesters[1]?.courses)) {
+          localData = parsed;
+          setInstances(localData);
+        } else {
+          localData = getDefaultInstances();
+          setInstances(localData);
+        }
       } else {
         const defaults = getDefaultInstances();
         localData = defaults;
