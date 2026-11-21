@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import Script from 'next/script';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -22,6 +23,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
+      <head>
+        <Script src="https://accounts.google.com/gsi/client" strategy="beforeInteractive" />
+      </head>
       <body className="min-h-screen bg-black text-[#f5f5f7] antialiased selection:bg-[#0071e3] selection:text-white">
         {children}
       </body>

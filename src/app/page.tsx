@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Course, 
   Instance, 
@@ -24,11 +24,22 @@ import {
   BarChart2,
   CheckCircle2,
   SlidersHorizontal,
-  Info
+  Info,
+  LogIn,
+  LogOut,
+  User as UserIcon
 } from 'lucide-react';
+
+interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  picture?: string;
+}
 
 export default function GradeCraftPage() {
   // --- STATE ---
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [instances, setInstances] = useState<Record<string, Instance>>({});
   const [activeInstanceId, setActiveInstanceId] = useState<string>('medium');
   const [activeSem, setActiveSem] = useState<number>(5);
@@ -46,12 +57,26 @@ export default function GradeCraftPage() {
   const [showNewInstanceModal, setShowNewInstanceModal] = useState<boolean>(false);
   const [newInstanceName, setNewInstanceName] = useState<string>('');
   const [targetCgpaInput, setTargetCgpaInput] = useState<string>('8.50');
+  const googleBtnRef = useRef<HTMLDivElement>(null);
 
-  // 1. Initial Load: Load local first, then automatically fetch and merge from Neon PostgreSQL
+  // 1. Initial Load: Restore user & load data from Neon or LocalStorage
   useEffect(() => {
+    // Check saved user
+    const savedUserJson = localStorage.getItem('gradecraft_auth_user');
+    let currentUser: AuthUser | null = null;
+    if (savedUserJson) {
+      try {
+        currentUser = JSON.parse(savedUserJson);
+        setUser(currentUser);
+      } catch {}
+    }
+
+    const currentUserId = currentUser ? currentUser.email : 'adithyen_user';
+    const storageKey = `gradecraft_instances_v3_${currentUserId}`;
+
     let localData: Record<string, Instance> = {};
     try {
-      const saved = localStorage.getItem('gradecraft_instances_v2');
+      const saved = localStorage.getItem(storageKey);
       if (saved) {
         localData = JSON.parse(saved);
         setInstances(localData);
@@ -65,8 +90,8 @@ export default function GradeCraftPage() {
       setInstances(localData);
     }
 
-    // Ping backend and fetch user instances from Neon PostgreSQL (cross-device & incognito sync!)
-    fetch('/api/instances?userId=adithyen_user')
+    // Auto-fetch from Neon PostgreSQL for this specific user
+    fetch(`/api/instances?userId=${encodeURIComponent(currentUserId)}`)
       .then(res => res.json())
       .then(data => {
         if (data.instances && data.instances.length > 0) {
@@ -84,7 +109,7 @@ export default function GradeCraftPage() {
           });
           setInstances(cloudMap);
           try {
-            localStorage.setItem('gradecraft_instances_v2', JSON.stringify(cloudMap));
+            localStorage.setItem(storageKey, JSON.stringify(cloudMap));
           } catch {}
           setCloudStatus('Neon Cloud Synced');
         } else {
@@ -96,11 +121,104 @@ export default function GradeCraftPage() {
       });
   }, []);
 
+  // 2. Setup Google Sign-In button
+  useEffect(() => {
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '628041736031-spsf2l1a7erq3rnr559i593kuujq0l6s.apps.googleusercontent.com';
+    
+    const initGoogle = () => {
+      if (typeof window !== 'undefined' && (window as any).google && (window as any).google.accounts) {
+        (window as any).google.accounts.id.initialize({
+          client_id: clientId,
+          callback: handleGoogleCredentialResponse,
+        });
+
+        if (googleBtnRef.current && !user) {
+          (window as any).google.accounts.id.renderButton(googleBtnRef.current, {
+            theme: 'filled_black',
+            size: 'medium',
+            shape: 'pill',
+            text: 'signin_with',
+          });
+        }
+      }
+    };
+
+    const timer = setTimeout(initGoogle, 500);
+    return () => clearTimeout(timer);
+  }, [user]);
+
+  // Handle Google Token
+  const handleGoogleCredentialResponse = (response: any) => {
+    try {
+      const base64Url = response.credential.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      const payload = JSON.parse(jsonPayload);
+      
+      const authUser: AuthUser = {
+        id: payload.sub,
+        name: payload.name || payload.email.split('@')[0],
+        email: payload.email,
+        picture: payload.picture,
+      };
+
+      setUser(authUser);
+      localStorage.setItem('gradecraft_auth_user', JSON.stringify(authUser));
+
+      // Load user instances from Neon for this logged-in account
+      fetch(`/api/instances?userId=${encodeURIComponent(authUser.email)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.instances && data.instances.length > 0) {
+            const userInstances: Record<string, Instance> = {};
+            data.instances.forEach((row: any) => {
+              const semData = typeof row.data_json === 'string' ? JSON.parse(row.data_json) : row.data_json;
+              userInstances[row.id] = {
+                id: row.id,
+                name: row.name,
+                targetCgpa: row.target_cgpa ? parseFloat(row.target_cgpa) : 8.5,
+                semesters: semData,
+                createdAt: row.updated_at || new Date().toISOString(),
+                updatedAt: row.updated_at || new Date().toISOString(),
+              };
+            });
+            setInstances(userInstances);
+            localStorage.setItem(`gradecraft_instances_v3_${authUser.email}`, JSON.stringify(userInstances));
+            setActiveInstanceId(Object.keys(userInstances)[0] || 'medium');
+          } else {
+            // New user account: seed default curriculum
+            const defaults = getDefaultInstances();
+            setInstances(defaults);
+            localStorage.setItem(`gradecraft_instances_v3_${authUser.email}`, JSON.stringify(defaults));
+          }
+          setCloudStatus('Neon Cloud Synced');
+        });
+
+    } catch (err) {
+      console.error('Google login parse error:', err);
+    }
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('gradecraft_auth_user');
+    const guestData = getDefaultInstances();
+    setInstances(guestData);
+    setActiveInstanceId('medium');
+    setCloudStatus('Local Mode');
+  };
+
   // Save to LocalStorage on instance changes
   const saveInstances = (updated: Record<string, Instance>) => {
     setInstances(updated);
+    const currentUserId = user ? user.email : 'adithyen_user';
     try {
-      localStorage.setItem('gradecraft_instances_v2', JSON.stringify(updated));
+      localStorage.setItem(`gradecraft_instances_v3_${currentUserId}`, JSON.stringify(updated));
     } catch (e) {
       console.error(e);
     }
@@ -272,15 +390,18 @@ export default function GradeCraftPage() {
   const handleSyncToNeon = async () => {
     setIsCloudSyncing(true);
     setCloudStatus('Syncing to Neon...');
+    const currentUserId = user ? user.email : 'adithyen_user';
+    const storageKey = `gradecraft_instances_v3_${currentUserId}`;
+
     try {
-      // Sync ALL instances to Neon PostgreSQL in parallel
+      // Sync ALL instances to Neon PostgreSQL in parallel for this specific user
       const syncPromises = Object.values(instances).map(inst => 
         fetch('/api/instances', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             id: inst.id,
-            userId: 'adithyen_user',
+            userId: currentUserId,
             name: inst.name,
             targetCgpa: inst.targetCgpa || 8.5,
             dataJson: inst.semesters,
@@ -291,7 +412,7 @@ export default function GradeCraftPage() {
       await Promise.all(syncPromises);
 
       // Verify and refresh latest state from Neon
-      const res = await fetch('/api/instances?userId=adithyen_user');
+      const res = await fetch(`/api/instances?userId=${encodeURIComponent(currentUserId)}`);
       const data = await res.json();
       if (data.instances && data.instances.length > 0) {
         const cloudMap: Record<string, Instance> = { ...instances };
@@ -308,7 +429,7 @@ export default function GradeCraftPage() {
         });
         setInstances(cloudMap);
         try {
-          localStorage.setItem('gradecraft_instances_v2', JSON.stringify(cloudMap));
+          localStorage.setItem(storageKey, JSON.stringify(cloudMap));
         } catch {}
       }
 
@@ -354,7 +475,7 @@ export default function GradeCraftPage() {
             </div>
           </div>
 
-          {/* Cloud Sync & Mode Pill */}
+          {/* Cloud Sync & Google Auth Profile */}
           <div className="flex items-center gap-3">
             <button
               onClick={handleSyncToNeon}
@@ -366,6 +487,34 @@ export default function GradeCraftPage() {
               <span className="hidden md:inline">{cloudStatus}</span>
               <span className="md:hidden">Sync</span>
             </button>
+
+            {/* Google Authentication Section */}
+            {user ? (
+              <div className="flex items-center gap-2.5 bg-[#18181b] border border-white/15 px-3 py-1.5 rounded-xl">
+                {user.picture ? (
+                  <img src={user.picture} alt={user.name} className="w-6 h-6 rounded-full border border-white/20" />
+                ) : (
+                  <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-[10px] font-black">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div className="hidden sm:block text-left">
+                  <div className="text-xs font-bold text-white truncate max-w-[120px]">{user.name}</div>
+                  <div className="text-[10px] text-zinc-400 truncate max-w-[120px]">{user.email}</div>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="apple-pressable p-1.5 rounded-lg text-zinc-400 hover:text-rose-400 hover:bg-white/10 transition"
+                  title="Sign out"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center">
+                <div ref={googleBtnRef} className="overflow-hidden rounded-full shadow-sm"></div>
+              </div>
+            )}
           </div>
         </div>
       </header>
