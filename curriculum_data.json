@@ -1,0 +1,643 @@
+{
+  "program": "B.Tech Computer Science and Engineering (Artificial Intelligence and Machine Learning)",
+  "scheme": "KTU 2024 Scheme (Group A)",
+  "totalDegreeCredits": 170,
+  "semesters": [
+    {
+      "sem": 1,
+      "title": "Semester 1 (July - December)",
+      "credits": 20,
+      "courses": [
+        {
+          "slot": "A",
+          "code": "GAMAT101",
+          "name": "Mathematics for Information Science - 1",
+          "credits": 3,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "BSC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "B",
+          "code": "GAPHT121",
+          "name": "Physics for Information Science",
+          "credits": 4,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "BSC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "C",
+          "code": "GMEST103",
+          "name": "Engineering Graphics and Computer Aided Drawing",
+          "credits": 3,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "ESC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "D",
+          "code": "GXEST104",
+          "name": "Introduction to Electrical & Electronics Engineering",
+          "credits": 4,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "ESC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "F",
+          "code": "UCEST105",
+          "name": "Algorithmic Thinking with Python",
+          "credits": 4,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "ESC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "L",
+          "code": "GXESL106",
+          "name": "Basic Electrical and Electronics Engineering Workshop",
+          "credits": 1,
+          "cieMax": 50,
+          "eseMax": 50,
+          "type": "ESC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "I",
+          "code": "UCPWT127",
+          "name": "Health and Wellness",
+          "credits": 1,
+          "cieMax": 50,
+          "eseMax": 0,
+          "type": "HMC",
+          "isNoGradePoint": true
+        }
+      ]
+    },
+    {
+      "sem": 2,
+      "title": "Semester 2 (January - June)",
+      "credits": 24,
+      "courses": [
+        {
+          "slot": "A",
+          "code": "GAMAT201",
+          "name": "Mathematics for Information Science - 2",
+          "credits": 3,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "BSC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "B",
+          "code": "GXCYT122",
+          "name": "Chemistry for Information Science",
+          "credits": 4,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "BSC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "C",
+          "code": "GXEST203",
+          "name": "Foundations of Computing: From Hardware to Web Design",
+          "credits": 3,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "ESC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "D",
+          "code": "GXEST204",
+          "name": "Programming in C",
+          "credits": 4,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "ESC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "E",
+          "code": "PCCST205",
+          "name": "Discrete Mathematics",
+          "credits": 4,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "PCC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "F",
+          "code": "UCEST206",
+          "name": "Engineering Entrepreneurship & IPR",
+          "credits": 3,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "ESC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "I",
+          "code": "UCHUT128",
+          "name": "Life Skills and Professional Communication",
+          "credits": 1,
+          "cieMax": 100,
+          "eseMax": 0,
+          "type": "HMC",
+          "isNoGradePoint": true
+        },
+        {
+          "slot": "L",
+          "code": "GXESL208",
+          "name": "IT Workshop",
+          "credits": 1,
+          "cieMax": 50,
+          "eseMax": 50,
+          "type": "ESC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "SEC",
+          "code": "UCSEM129",
+          "name": "Skill Enhancement Course: Digital 101 (NASSCOM MOOC)",
+          "credits": 1,
+          "cieMax": 100,
+          "eseMax": 0,
+          "type": "SEC",
+          "isNoGradePoint": true
+        }
+      ]
+    },
+    {
+      "sem": 3,
+      "title": "Semester 3 (July - December)",
+      "credits": 25,
+      "courses": [
+        {
+          "slot": "A",
+          "code": "GAMAT301",
+          "name": "Mathematics for Information Science - 3",
+          "credits": 3,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "BSC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "B",
+          "code": "PCCST302",
+          "name": "Theory of Computation",
+          "credits": 4,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "PCC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "C",
+          "code": "PCCST303",
+          "name": "Data Structures and Algorithms",
+          "credits": 4,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "PCC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "D",
+          "code": "PBCMT304",
+          "name": "Concepts in Machine Learning (PC-PBL)",
+          "credits": 4,
+          "cieMax": 60,
+          "eseMax": 40,
+          "type": "PBL",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "F",
+          "code": "GAEST305",
+          "name": "Digital Electronics & Logic Design",
+          "credits": 4,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "ESC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "G",
+          "code": "UCHUT346",
+          "name": "Economics for Engineers",
+          "credits": 2,
+          "cieMax": 50,
+          "eseMax": 50,
+          "type": "HMC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "L",
+          "code": "PCCSL307",
+          "name": "Data Structures Lab",
+          "credits": 2,
+          "cieMax": 50,
+          "eseMax": 50,
+          "type": "PCL",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "Q",
+          "code": "PCCSL308",
+          "name": "Digital Lab",
+          "credits": 2,
+          "cieMax": 50,
+          "eseMax": 50,
+          "type": "PCL",
+          "isNoGradePoint": false
+        }
+      ]
+    },
+    {
+      "sem": 4,
+      "title": "Semester 4 (January - June)",
+      "credits": 24,
+      "courses": [
+        {
+          "slot": "A",
+          "code": "GAMAT401",
+          "name": "Mathematics for Information Science - 4",
+          "credits": 3,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "BSC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "B",
+          "code": "PCCMT402",
+          "name": "Fundamentals of Artificial Intelligence",
+          "credits": 4,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "PCC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "C",
+          "code": "PCCST403",
+          "name": "Operating Systems",
+          "credits": 4,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "PCC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "D",
+          "code": "PBCMT404",
+          "name": "Database Systems (PC-PBL)",
+          "credits": 4,
+          "cieMax": 60,
+          "eseMax": 40,
+          "type": "PBL",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "E",
+          "code": "PECMT41N",
+          "name": "Program Elective I (Software Engineering / Pattern Recognition)",
+          "credits": 3,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "PEC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "G",
+          "code": "UCHUT347",
+          "name": "Engineering Ethics and Sustainable Development",
+          "credits": 2,
+          "cieMax": 50,
+          "eseMax": 50,
+          "type": "HMC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "L",
+          "code": "PCCSL407",
+          "name": "Operating Systems Lab",
+          "credits": 2,
+          "cieMax": 50,
+          "eseMax": 50,
+          "type": "PCL",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "Q",
+          "code": "PCCML408",
+          "name": "Artificial Intelligence Lab",
+          "credits": 2,
+          "cieMax": 50,
+          "eseMax": 50,
+          "type": "PCL",
+          "isNoGradePoint": false
+        }
+      ]
+    },
+    {
+      "sem": 5,
+      "title": "Semester 5 (July - December)",
+      "credits": 23,
+      "courses": [
+        {
+          "slot": "A",
+          "code": "PCCST501",
+          "name": "Computer Networks",
+          "credits": 4,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "PCC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "B",
+          "code": "PCCST502",
+          "name": "Design and Analysis of Algorithms",
+          "credits": 4,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "PCC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "C",
+          "code": "PCCMT503",
+          "name": "Deep Learning Concepts",
+          "credits": 3,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "PCC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "D",
+          "code": "PBCMT504",
+          "name": "Introduction to Computer Vision (PC-PBL)",
+          "credits": 4,
+          "cieMax": 60,
+          "eseMax": 40,
+          "type": "PBL",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "E",
+          "code": "PECMT52N",
+          "name": "Program Elective II (Data Mining / Cloud Computing)",
+          "credits": 3,
+          "cieMax": 60,
+          "eseMax": 40,
+          "type": "PEC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "I",
+          "code": "UCHUM506",
+          "name": "Constitution of India (MOOC)",
+          "credits": 1,
+          "cieMax": 100,
+          "eseMax": 0,
+          "type": "HMC",
+          "isNoGradePoint": true
+        },
+        {
+          "slot": "L",
+          "code": "PCCSL507",
+          "name": "Networks Lab",
+          "credits": 2,
+          "cieMax": 50,
+          "eseMax": 50,
+          "type": "PCL",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "Q",
+          "code": "PCCML508",
+          "name": "Deep Learning Lab",
+          "credits": 2,
+          "cieMax": 50,
+          "eseMax": 50,
+          "type": "PCL",
+          "isNoGradePoint": false
+        }
+      ]
+    },
+    {
+      "sem": 6,
+      "title": "Semester 6 (January - June)",
+      "credits": 23,
+      "courses": [
+        {
+          "slot": "A",
+          "code": "PCCMT601",
+          "name": "Introduction to Natural Language Processing",
+          "credits": 4,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "PCC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "B",
+          "code": "PCCMT602",
+          "name": "Generative AI",
+          "credits": 3,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "PCC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "C",
+          "code": "PECMT63N",
+          "name": "Program Elective III (Software Testing / Cryptography)",
+          "credits": 3,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "PEC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "D",
+          "code": "PBCMT604",
+          "name": "Concepts in Data Analytics (PC-PBL)",
+          "credits": 4,
+          "cieMax": 60,
+          "eseMax": 40,
+          "type": "PBL",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "F",
+          "code": "GAEST605",
+          "name": "Design Thinking and Product Development",
+          "credits": 2,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "ESC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "O",
+          "code": "OECMT61N",
+          "name": "Open Elective I",
+          "credits": 3,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "OEC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "L",
+          "code": "PCCML607",
+          "name": "Natural Language Processing Lab",
+          "credits": 2,
+          "cieMax": 50,
+          "eseMax": 50,
+          "type": "PCL",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "P",
+          "code": "PCCMP608",
+          "name": "Mini Project: Socially Relevant Project",
+          "credits": 2,
+          "cieMax": 50,
+          "eseMax": 50,
+          "type": "PWS",
+          "isNoGradePoint": false
+        }
+      ]
+    },
+    {
+      "sem": 7,
+      "title": "Semester 7 (July - December)",
+      "credits": 17,
+      "courses": [
+        {
+          "slot": "A",
+          "code": "PECMT74N",
+          "name": "Program Elective IV (Big Data / Responsible AI)",
+          "credits": 3,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "PEC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "B",
+          "code": "PECMT75N",
+          "name": "Program Elective V (Computational Linguistics / IoT)",
+          "credits": 3,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "PEC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "O",
+          "code": "OECMT72N",
+          "name": "Open Elective II (Cyber Security / Cloud Computing)",
+          "credits": 3,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "OEC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "I",
+          "code": "UEHUT704",
+          "name": "HMC Elective (Project Management / Foreign Language)",
+          "credits": 2,
+          "cieMax": 50,
+          "eseMax": 50,
+          "type": "HMC",
+          "isNoGradePoint": true
+        },
+        {
+          "slot": "S",
+          "code": "PCCMS705",
+          "name": "Seminar",
+          "credits": 2,
+          "cieMax": 50,
+          "eseMax": 0,
+          "type": "PWS",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "P",
+          "code": "PCCMP706",
+          "name": "Major Project Phase - I / Internship",
+          "credits": 4,
+          "cieMax": 100,
+          "eseMax": 0,
+          "type": "PWS",
+          "isNoGradePoint": false
+        }
+      ]
+    },
+    {
+      "sem": 8,
+      "title": "Semester 8 (January - June)",
+      "credits": 11,
+      "courses": [
+        {
+          "slot": "A",
+          "code": "PECMT86N",
+          "name": "Program Elective VI (LLMs / Prompt Engineering)",
+          "credits": 3,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "PEC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "O",
+          "code": "OECMT83N",
+          "name": "Open Elective III (Algorithms / Web Programming)",
+          "credits": 3,
+          "cieMax": 40,
+          "eseMax": 60,
+          "type": "OEC",
+          "isNoGradePoint": false
+        },
+        {
+          "slot": "I",
+          "code": "UEHUT803",
+          "name": "Organizational Behavior and Business Communication",
+          "credits": 1,
+          "cieMax": 50,
+          "eseMax": 50,
+          "type": "HMC",
+          "isNoGradePoint": true
+        },
+        {
+          "slot": "P",
+          "code": "PCCMP806",
+          "name": "Major Project Phase - II / Full Internship",
+          "credits": 4,
+          "cieMax": 100,
+          "eseMax": 0,
+          "type": "PWS",
+          "isNoGradePoint": false
+        }
+      ]
+    }
+  ]
+}
