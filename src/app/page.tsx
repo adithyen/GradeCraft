@@ -27,7 +27,9 @@ import {
   Info,
   LogIn,
   LogOut,
-  User as UserIcon
+  User as UserIcon,
+  Download,
+  Upload
 } from 'lucide-react';
 
 interface AuthUser {
@@ -60,6 +62,7 @@ export default function GradeCraftPage() {
   const [isEditingTarget, setIsEditingTarget] = useState<boolean>(false);
   const [editingTargetVal, setEditingTargetVal] = useState<string>('');
   const googleBtnRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Sync confirmation popup state when logging in with existing local data
   const [syncPromptModal, setSyncPromptModal] = useState<{
@@ -489,6 +492,74 @@ export default function GradeCraftPage() {
     setActiveInstanceId(nextKey);
   };
 
+  // Export current active scenario or all scenarios as JSON file
+  const handleExportData = () => {
+    const exportObject = {
+      version: 'gradecraft_v1',
+      exportedAt: new Date().toISOString(),
+      activeInstance: activeInstanceId,
+      instances: instances,
+    };
+    const jsonStr = JSON.stringify(exportObject, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `gradecraft-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  // Import JSON backup file
+  const handleImportData = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const content = event.target?.result as string;
+        const parsed = JSON.parse(content);
+
+        let importedInstances: Record<string, Instance> = {};
+        if (parsed.instances && typeof parsed.instances === 'object') {
+          importedInstances = parsed.instances;
+        } else if (parsed.semesters) {
+          // User imported a single instance JSON payload directly
+          const instId = parsed.id || 'imported_' + Date.now();
+          importedInstances = {
+            ...instances,
+            [instId]: {
+              id: instId,
+              name: parsed.name || 'Imported Scenario',
+              targetCgpa: parsed.targetCgpa || 8.5,
+              semesters: parsed.semesters,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            }
+          };
+        } else {
+          alert('Invalid GradeCraft JSON format.');
+          return;
+        }
+
+        saveInstances(importedInstances);
+        const firstKey = parsed.activeInstance && importedInstances[parsed.activeInstance] 
+          ? parsed.activeInstance 
+          : Object.keys(importedInstances)[0];
+        if (firstKey) setActiveInstanceId(firstKey);
+        alert('Data imported successfully!');
+      } catch (err: any) {
+        alert('Failed to parse JSON file: ' + err.message);
+      } finally {
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      }
+    };
+    reader.readAsText(file);
+  };
+
   const handleSyncToNeon = async () => {
     setIsCloudSyncing(true);
     setCloudStatus('Syncing to Neon...');
@@ -909,8 +980,35 @@ export default function GradeCraftPage() {
             </button>
           </div>
 
-          {/* Quick Actions */}
+          {/* Quick Actions: Import / Export / Duplicate */}
           <div className="flex items-center gap-2 self-end md:self-auto">
+            {/* Hidden File Input for Import */}
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleImportData} 
+              accept=".json" 
+              className="hidden" 
+            />
+
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="apple-pressable px-3 py-1.5 rounded-xl text-xs font-bold text-zinc-300 hover:text-white hover:bg-[#27272a] border border-white/10 transition flex items-center gap-1.5"
+              title="Import JSON scenario file"
+            >
+              <Upload className="w-3.5 h-3.5 text-blue-400" />
+              <span>Import</span>
+            </button>
+
+            <button
+              onClick={handleExportData}
+              className="apple-pressable px-3 py-1.5 rounded-xl text-xs font-bold text-zinc-300 hover:text-white hover:bg-[#27272a] border border-white/10 transition flex items-center gap-1.5"
+              title="Export all scenarios as a JSON file"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Export</span>
+            </button>
+
             <button
               onClick={handleDuplicateInstance}
               className="apple-pressable px-3 py-1.5 rounded-xl text-xs font-bold text-zinc-300 hover:text-white hover:bg-[#27272a] border border-white/10 transition flex items-center gap-1.5"
