@@ -641,6 +641,13 @@ export default function GradeCraftPage() {
                           </>
                         )}
                       </div>
+
+                      {isChallenged && (
+                        <div className="mt-2 text-[11px] text-[#ff9f0a] flex items-center gap-1.5 bg-[#ff9f0a]/10 px-2.5 py-1 rounded-lg border border-[#ff9f0a]/20">
+                          <span>⚡</span>
+                          <span><b>Challenged Course Active:</b> Credits (+{course.credits}) count toward degree total (170), excluded from SGPA & CGPA.</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Controls Column (Adapts cleanly based on mode) */}
@@ -697,11 +704,23 @@ export default function GradeCraftPage() {
                         </div>
                       )}
 
-                      {/* --- C. CHALLENGED TOGGLE SWITCH (Apple UISwitch Style) --- */}
-                      <div className="flex items-center gap-2 pl-2 sm:border-l sm:border-white/[0.08]">
-                        <span className="text-xs font-medium text-[#86868b] hidden sm:inline">
-                          Challenged:
-                        </span>
+                      {/* --- C. CHALLENGED TOGGLE SWITCH (Apple Pill Container with Tooltip & Always-Visible Label) --- */}
+                      <div className={`flex items-center justify-between sm:justify-start gap-2.5 px-3 py-1.5 rounded-xl border transition ${
+                        isChallenged 
+                          ? 'border-[#ff9f0a]/50 bg-[#ff9f0a]/15 text-[#ff9f0a]' 
+                          : 'border-white/[0.08] bg-[#2c2c2e]/60 text-white'
+                      }`}>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs font-semibold whitespace-nowrap">
+                            Challenge Course
+                          </span>
+                          <span 
+                            title="Challenged course rule: Credits count towards your 170 degree requirement, but are completely excluded from the SGPA/CGPA formula denominator and numerator."
+                            className="cursor-help text-[#86868b] hover:text-white text-xs select-none"
+                          >
+                            ⓘ
+                          </span>
+                        </div>
                         <label className="relative inline-flex items-center cursor-pointer apple-pressable">
                           <input 
                             type="checkbox" 
@@ -709,7 +728,7 @@ export default function GradeCraftPage() {
                             onChange={() => handleToggleChallenged(idx)} 
                             className="sr-only peer"
                           />
-                          <div className="w-11 h-6 bg-[#3a3a3c] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#ff9f0a]"></div>
+                          <div className="w-10 h-5 bg-[#3a3a3c] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#ff9f0a]"></div>
                         </label>
                       </div>
 
