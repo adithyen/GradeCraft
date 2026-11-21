@@ -13,7 +13,6 @@ import {
 } from '@/lib/calculator';
 import { KTU_2024_AIML_CURRICULUM, getDefaultInstances } from '@/data/ktu2024';
 import { 
-  Sparkles, 
   Plus, 
   Trash2, 
   Copy, 
@@ -22,7 +21,10 @@ import {
   GraduationCap, 
   ArrowRight,
   Zap,
-  BarChart2
+  BarChart2,
+  CheckCircle2,
+  SlidersHorizontal,
+  Info
 } from 'lucide-react';
 
 export default function GradeCraftPage() {
@@ -287,36 +289,36 @@ export default function GradeCraftPage() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-[#f5f5f7] pb-24">
+    <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] pb-24">
       
-      {/* 1. APPLE NAVIGATION BAR */}
-      <header className="sticky top-0 z-40 bg-[#000000]/85 backdrop-blur-xl border-b border-white/[0.08]">
-        <div className="max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 h-16 flex items-center justify-between gap-4">
+      {/* 1. APPLE NAVIGATION BAR — Full Width */}
+      <header className="sticky top-0 z-40 bg-[#09090b]/90 backdrop-blur-2xl border-b border-white/[0.12] w-full">
+        <div className="w-full px-4 sm:px-6 md:px-8 xl:px-12 h-16 flex items-center justify-between gap-4">
           
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#1c1c1e] border border-white/10 flex items-center justify-center text-white font-bold text-base shadow-sm">
-              <GraduationCap className="w-5 h-5 text-[#0071e3]" />
+            <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-white font-black text-lg shadow-sm">
+              <GraduationCap className="w-6 h-6 text-blue-400" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-semibold text-base sm:text-lg tracking-tight text-white">GradeCraft</h1>
-                <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-white/[0.08] text-[#98989d]">
+                <h1 className="font-extrabold text-lg sm:text-xl tracking-tight text-white">GradeCraft</h1>
+                <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">
                   KTU 2024
                 </span>
               </div>
-              <p className="text-[11px] text-[#86868b] hidden sm:block">B.Tech CSE (AI & ML) • Group A Curriculum</p>
+              <p className="text-xs text-zinc-300 font-medium hidden sm:block">B.Tech CSE (AI & ML) • Group A Curriculum</p>
             </div>
           </div>
 
           {/* Cloud Sync & Mode Pill */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <button
               onClick={handleSyncToNeon}
               disabled={isCloudSyncing}
-              className="apple-pressable flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-[#1c1c1e] hover:bg-[#2c2c2e] border border-white/10 text-[#f5f5f7] transition"
+              className="apple-pressable flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold bg-[#18181b] hover:bg-[#27272a] border border-white/15 text-white transition shadow-sm"
               title="Click to sync instances to Neon PostgreSQL"
             >
-              <Cloud className={`w-3.5 h-3.5 ${isCloudSyncing ? 'animate-bounce text-[#0071e3]' : 'text-[#30d158]'}`} />
+              <Cloud className={`w-4 h-4 ${isCloudSyncing ? 'animate-bounce text-blue-400' : 'text-emerald-400'}`} />
               <span className="hidden md:inline">{cloudStatus}</span>
               <span className="md:hidden">Sync</span>
             </button>
@@ -324,37 +326,37 @@ export default function GradeCraftPage() {
         </div>
       </header>
 
-      {/* MAIN CONTAINER (Optimized for Widescreen Desktop + Fluid Mobile) */}
-      <main className="max-w-[1560px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 pt-6 space-y-6">
+      {/* MAIN CONTAINER — Full Width Edge-to-Edge with Generous Padding */}
+      <main className="w-full px-4 sm:px-6 md:px-8 xl:px-12 pt-6 space-y-6">
 
         {/* 2. APPLE METRICS & ACADEMIC FORECAST HERO CARD */}
-        <section className="bg-[#161618] rounded-3xl p-5 sm:p-7 border border-white/[0.08] shadow-apple-card relative overflow-hidden">
+        <section className="bg-[#18181b] rounded-3xl p-6 sm:p-8 border border-white/[0.14] shadow-2xl relative overflow-hidden">
           
           {/* Top Info Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.06]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.10]">
             <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-[#86868b] block mb-1">
+              <span className="text-xs font-black uppercase tracking-widest text-sky-400 block mb-1">
                 Academic Progress & Forecast
               </span>
-              <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white flex items-center gap-3">
                 <span>{currentInstance?.name || 'Scenario'}</span>
               </h2>
             </div>
 
             {/* Semester Range Selector: "Predict up to Semester X" */}
-            <div className="flex items-center gap-2 bg-[#1c1c1e] p-1.5 rounded-2xl border border-white/[0.06]">
-              <span className="text-xs font-medium text-[#86868b] pl-2 whitespace-nowrap">
+            <div className="flex items-center gap-2 bg-[#27272a] p-1.5 rounded-2xl border border-white/15 shadow-sm">
+              <span className="text-xs font-extrabold text-zinc-200 pl-3 whitespace-nowrap uppercase tracking-wider">
                 Predict up to:
               </span>
-              <div className="flex items-center gap-1 overflow-x-auto py-0.5">
+              <div className="flex items-center gap-1.5 overflow-x-auto py-0.5">
                 {[1, 2, 3, 4, 5, 6, 7, 8].map(semNum => (
                   <button
                     key={semNum}
                     onClick={() => setPredictUpToSem(semNum)}
-                    className={`apple-pressable px-2.5 py-1 rounded-xl text-xs font-semibold transition ${
+                    className={`apple-pressable px-3 py-1.5 rounded-xl text-xs font-extrabold transition ${
                       predictUpToSem === semNum
-                        ? 'bg-[#0071e3] text-white shadow-apple-pill'
-                        : 'text-[#86868b] hover:text-white'
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'text-zinc-300 hover:text-white hover:bg-white/10'
                     }`}
                   >
                     S{semNum}
@@ -364,124 +366,124 @@ export default function GradeCraftPage() {
             </div>
           </div>
 
-          {/* Key Metrics Display: 4 Balanced Columns + Desktop Trajectory Visualizer */}
+          {/* Key Metrics Display: 4 High-Visibility Bold Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-6">
             
             {/* Metric 1: Cumulative CGPA (S1 to S{predictUpToSem}) */}
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-xs text-[#86868b]">
-                <span className="font-semibold uppercase tracking-wider">Cumulative CGPA</span>
-                <span className="px-1.5 py-0.5 rounded bg-white/[0.06] text-[10px] text-[#98989d]">
+            <div className="space-y-1.5 bg-[#121214] p-5 rounded-2xl border border-white/[0.08]">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-zinc-300">Cumulative CGPA</span>
+                <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 text-xs font-extrabold border border-emerald-500/30">
                   S1 – S{predictUpToSem}
                 </span>
               </div>
-              <div className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#30d158] tabular-nums">
+              <div className="text-5xl sm:text-6xl font-black tracking-tight text-emerald-400 tabular-nums drop-shadow-sm">
                 {cumulativeMetrics.cgpa.toFixed(2)}
               </div>
-              <p className="text-xs font-medium text-[#86868b]">
+              <p className="text-sm font-bold text-zinc-200">
                 {cumulativeMetrics.classification}
               </p>
             </div>
 
             {/* Metric 2: Current Semester SGPA */}
-            <div className="space-y-1 sm:border-l sm:border-white/[0.06] sm:pl-6">
-              <div className="flex items-center justify-between text-xs text-[#86868b]">
-                <span className="font-semibold uppercase tracking-wider">Selected Sem SGPA</span>
-                <span className="px-1.5 py-0.5 rounded bg-[#0071e3]/20 text-[#0071e3] text-[10px] font-bold">
+            <div className="space-y-1.5 bg-[#121214] p-5 rounded-2xl border border-white/[0.08]">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-zinc-300">Selected Sem SGPA</span>
+                <span className="px-2.5 py-0.5 rounded-md bg-blue-600 text-white text-xs font-black shadow-sm">
                   S{activeSem}
                 </span>
               </div>
-              <div className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white tabular-nums">
+              <div className="text-5xl sm:text-6xl font-black tracking-tight text-white tabular-nums drop-shadow-sm">
                 {semMetrics.sgpa.toFixed(2)}
               </div>
-              <p className="text-xs text-[#86868b]">
-                Graded: <b className="text-white">{semMetrics.gradedCredits} cr</b> • Challenged: <b className="text-[#ff9f0a]">{semMetrics.challengedCredits} cr</b>
+              <p className="text-sm font-semibold text-zinc-300">
+                Graded: <b className="text-white font-bold">{semMetrics.gradedCredits} cr</b> • Challenged: <b className="text-amber-400 font-bold">{semMetrics.challengedCredits} cr</b>
               </p>
             </div>
 
             {/* Metric 3: Credits Earned towards 170 */}
-            <div className="space-y-1 lg:border-l lg:border-white/[0.06] lg:pl-6">
-              <div className="flex items-center justify-between text-xs text-[#86868b]">
-                <span className="font-semibold uppercase tracking-wider">Degree Credits</span>
-                <span className="text-[10px] text-[#98989d]">Degree: 170</span>
+            <div className="space-y-1.5 bg-[#121214] p-5 rounded-2xl border border-white/[0.08]">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-zinc-300">Degree Credits</span>
+                <span className="text-xs font-bold text-zinc-300">Degree: 170</span>
               </div>
-              <div className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#98989d] tabular-nums">
-                {cumulativeMetrics.totalEarnedCredits} <span className="text-xl font-normal text-[#86868b]">/ 170</span>
+              <div className="text-5xl sm:text-6xl font-black tracking-tight text-white tabular-nums">
+                {cumulativeMetrics.totalEarnedCredits} <span className="text-2xl font-bold text-zinc-400">/ 170</span>
               </div>
-              <div className="w-full bg-[#2c2c2e] h-2 rounded-full overflow-hidden mt-2">
+              <div className="w-full bg-zinc-800 h-3 rounded-full overflow-hidden mt-3 p-0.5 border border-white/10">
                 <div 
-                  className="bg-[#0071e3] h-full rounded-full transition-all duration-300"
+                  className="bg-blue-500 h-full rounded-full transition-all duration-300 shadow-[0_0_12px_rgba(59,130,246,0.6)]"
                   style={{ width: `${Math.min(100, (cumulativeMetrics.totalEarnedCredits / 170) * 100)}%` }}
                 />
               </div>
             </div>
 
             {/* Metric 4: Goal Planner & Status */}
-            <div className="space-y-1 sm:border-l sm:border-white/[0.06] sm:pl-6">
-              <div className="flex items-center justify-between text-xs text-[#86868b]">
-                <span className="font-semibold uppercase tracking-wider">Target Goal</span>
-                <span className="px-1.5 py-0.5 rounded bg-white/[0.06] text-[10px] text-[#98989d]">
+            <div className="space-y-1.5 bg-[#121214] p-5 rounded-2xl border border-white/[0.08]">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-extrabold uppercase tracking-wider text-zinc-300">Target Goal</span>
+                <span className="px-2 py-0.5 rounded-md bg-sky-500/20 text-sky-300 text-xs font-extrabold border border-sky-500/30">
                   Goal {(currentInstance?.targetCgpa || 8.5).toFixed(2)}
                 </span>
               </div>
-              <div className="text-4xl sm:text-5xl font-extrabold tracking-tight text-[#0071e3] tabular-nums">
+              <div className="text-5xl sm:text-6xl font-black tracking-tight text-sky-400 tabular-nums">
                 {(currentInstance?.targetCgpa || 8.5).toFixed(2)}
               </div>
-              <p className="text-xs font-medium text-[#86868b]">
+              <p className="text-sm font-bold">
                 {cumulativeMetrics.cgpa >= (currentInstance?.targetCgpa || 8.5) 
-                  ? <span className="text-[#30d158] font-bold">✓ Exceeding Goal (+{(cumulativeMetrics.cgpa - (currentInstance?.targetCgpa || 8.5)).toFixed(2)})</span> 
-                  : <span className="text-[#ff9f0a] font-bold">Goal Delta: -{((currentInstance?.targetCgpa || 8.5) - cumulativeMetrics.cgpa).toFixed(2)}</span>}
+                  ? <span className="text-emerald-400 font-extrabold">✓ Exceeding Goal (+{(cumulativeMetrics.cgpa - (currentInstance?.targetCgpa || 8.5)).toFixed(2)})</span> 
+                  : <span className="text-amber-400 font-extrabold">Goal Delta: -{((currentInstance?.targetCgpa || 8.5) - cumulativeMetrics.cgpa).toFixed(2)}</span>}
               </p>
             </div>
 
           </div>
 
-          {/* Desktop Interactive Semester Trajectory (Apple Fitness Trend Style) */}
-          <div className="mt-6 pt-5 border-t border-white/[0.06]">
-            <div className="flex items-center justify-between mb-3 text-xs text-[#86868b]">
-              <span className="font-semibold uppercase tracking-wider flex items-center gap-1.5">
-                <BarChart2 className="w-3.5 h-3.5 text-[#0071e3]" />
+          {/* Interactive Semester Trajectory (Full-Width Visual Cupertino Bar Chart) */}
+          <div className="mt-6 pt-5 border-t border-white/[0.10]">
+            <div className="flex items-center justify-between mb-3 text-sm text-zinc-200">
+              <span className="font-extrabold uppercase tracking-wider flex items-center gap-2 text-white">
+                <BarChart2 className="w-4 h-4 text-blue-400" />
                 Semester Performance Trajectory (S1 to S8) — Click any bar to navigate
               </span>
-              <span className="text-[11px] text-[#98989d]">
-                Cumulative S1–S{predictUpToSem}: <b className="text-white">{cumulativeMetrics.cgpa.toFixed(2)}</b> • Degree S8 Projection: <b className="text-[#30d158]">{degreeProjection.cgpa.toFixed(2)}</b>
+              <span className="text-xs font-semibold text-zinc-300">
+                Cumulative S1–S{predictUpToSem}: <b className="text-white font-extrabold">{cumulativeMetrics.cgpa.toFixed(2)}</b> • Degree S8 Projection: <b className="text-emerald-400 font-extrabold">{degreeProjection.cgpa.toFixed(2)}</b>
               </span>
             </div>
 
-            <div className="grid grid-cols-8 gap-2 bg-[#121214] p-3 rounded-2xl border border-white/[0.04]">
+            <div className="grid grid-cols-8 gap-3 bg-[#101012] p-4 rounded-2xl border border-white/[0.08]">
               {semesterTrends.map((st) => {
-                const heightPercent = Math.min(100, Math.max(15, (st.sgpa / 10.0) * 100));
+                const heightPercent = Math.min(100, Math.max(18, (st.sgpa / 10.0) * 100));
                 const isSelected = st.active;
                 return (
                   <button
                     key={st.sem}
                     onClick={() => setActiveSem(st.sem)}
                     title={`Semester ${st.sem}: SGPA ${st.sgpa.toFixed(2)} (${st.credits} Credits)`}
-                    className={`apple-pressable flex flex-col items-center justify-end p-2 rounded-xl transition group ${
+                    className={`apple-pressable flex flex-col items-center justify-end p-2.5 rounded-xl transition group ${
                       isSelected 
-                        ? 'bg-white/[0.08] ring-1 ring-[#0071e3]' 
-                        : 'hover:bg-white/[0.03]'
+                        ? 'bg-blue-600/20 ring-2 ring-blue-500 scale-105' 
+                        : 'hover:bg-white/[0.06]'
                     }`}
                   >
-                    <span className="text-[11px] font-bold tabular-nums text-white mb-1.5 opacity-90 group-hover:opacity-100">
+                    <span className="text-xs font-black tabular-nums text-white mb-2">
                       {st.sgpa.toFixed(2)}
                     </span>
-                    <div className="w-full max-w-[28px] h-14 bg-[#242426] rounded-full overflow-hidden flex flex-col justify-end p-0.5">
+                    <div className="w-full max-w-[36px] h-20 bg-zinc-800 rounded-full overflow-hidden flex flex-col justify-end p-0.5 border border-white/10">
                       <div 
                         className={`w-full rounded-full transition-all duration-300 ${
                           !st.inPredictionRange
-                            ? 'bg-[#636366]/40'
+                            ? 'bg-zinc-600'
                             : st.sgpa >= 9.0 
-                              ? 'bg-[#30d158]' 
+                              ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]' 
                               : st.sgpa >= 8.0 
-                                ? 'bg-[#0071e3]' 
-                                : 'bg-[#ff9f0a]'
+                                ? 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]' 
+                                : 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]'
                         }`}
                         style={{ height: `${heightPercent}%` }}
                       />
                     </div>
-                    <span className={`text-[11px] font-semibold mt-1.5 ${
-                      isSelected ? 'text-[#0071e3]' : 'text-[#86868b] group-hover:text-white'
+                    <span className={`text-xs font-black mt-2 ${
+                      isSelected ? 'text-blue-400' : 'text-zinc-200 group-hover:text-white'
                     }`}>
                       S{st.sem}
                     </span>
@@ -493,16 +495,16 @@ export default function GradeCraftPage() {
 
           {/* Full Degree Forecast Callout */}
           {predictUpToSem < 8 && (
-            <div className="mt-4 pt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-[#86868b]">
+            <div className="mt-4 pt-3 flex flex-wrap items-center justify-between gap-3 text-sm text-zinc-300">
               <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#0071e3]" />
-                <span>Full Degree (S1–S8) Projected CGPA with current scenario settings: <b className="text-white font-semibold">{degreeProjection.cgpa.toFixed(2)}</b> ({degreeProjection.totalEarnedCredits} total credits)</span>
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                <span>Full Degree (S1–S8) Projected CGPA with current scenario settings: <b className="text-white font-extrabold">{degreeProjection.cgpa.toFixed(2)}</b> ({degreeProjection.totalEarnedCredits} total credits)</span>
               </div>
               <button 
                 onClick={() => setPredictUpToSem(8)}
-                className="text-[#0071e3] hover:underline font-medium flex items-center gap-1"
+                className="text-blue-400 hover:text-blue-300 hover:underline font-bold flex items-center gap-1.5"
               >
-                Expand Prediction to S8 <ArrowRight className="w-3 h-3" />
+                Expand Prediction to S8 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           )}
@@ -511,10 +513,10 @@ export default function GradeCraftPage() {
 
 
         {/* 3. SCENARIO / INSTANCE MANAGEMENT BAR */}
-        <section className="bg-[#1c1c1e] rounded-2xl p-3 border border-white/[0.08] flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <section className="bg-[#18181b] rounded-2xl p-4 border border-white/[0.12] flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-md">
           
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-            <span className="text-xs font-semibold text-[#86868b] uppercase tracking-wider pl-1 whitespace-nowrap">
+          <div className="flex items-center gap-2.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
+            <span className="text-xs font-black text-zinc-300 uppercase tracking-widest pl-1 whitespace-nowrap">
               Scenarios:
             </span>
             
@@ -524,10 +526,10 @@ export default function GradeCraftPage() {
                 <div key={inst.id} className="relative group flex items-center">
                   <button
                     onClick={() => setActiveInstanceId(inst.id)}
-                    className={`apple-pressable px-3.5 py-1.5 rounded-xl text-xs font-semibold transition whitespace-nowrap flex items-center gap-2 ${
+                    className={`apple-pressable px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition whitespace-nowrap flex items-center gap-2 ${
                       isActive 
-                        ? 'bg-white text-black shadow-apple-pill font-bold' 
-                        : 'bg-[#2c2c2e] text-[#98989d] hover:text-white border border-white/[0.04]'
+                        ? 'bg-white text-black shadow-lg font-black' 
+                        : 'bg-[#27272a] text-zinc-200 hover:text-white hover:bg-[#3f3f46] border border-white/10'
                     }`}
                   >
                     <span>{inst.name}</span>
@@ -537,10 +539,10 @@ export default function GradeCraftPage() {
                   {Object.keys(instances).length > 1 && (
                     <button
                       onClick={(e) => { e.stopPropagation(); handleDeleteInstance(inst.id); }}
-                      className="ml-1 opacity-40 hover:opacity-100 text-[#ff453a] p-1 rounded-full hover:bg-white/10 transition"
+                      className="ml-1 opacity-40 hover:opacity-100 text-rose-400 p-1 rounded-full hover:bg-white/10 transition"
                       title="Delete scenario"
                     >
-                      <Trash2 className="w-3 h-3" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
@@ -549,9 +551,9 @@ export default function GradeCraftPage() {
 
             <button
               onClick={() => setShowNewInstanceModal(true)}
-              className="apple-pressable px-3 py-1.5 rounded-xl text-xs font-medium bg-[#2c2c2e] hover:bg-[#3a3a3c] text-[#0071e3] border border-[#0071e3]/30 flex items-center gap-1 whitespace-nowrap"
+              className="apple-pressable px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/40 flex items-center gap-1.5 whitespace-nowrap"
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus className="w-4 h-4" />
               <span>New Scenario</span>
             </button>
           </div>
@@ -560,10 +562,10 @@ export default function GradeCraftPage() {
           <div className="flex items-center gap-2 self-end md:self-auto">
             <button
               onClick={handleDuplicateInstance}
-              className="apple-pressable px-2.5 py-1 rounded-lg text-xs font-medium text-[#86868b] hover:text-white hover:bg-[#2c2c2e] transition flex items-center gap-1"
+              className="apple-pressable px-3 py-1.5 rounded-xl text-xs font-bold text-zinc-300 hover:text-white hover:bg-[#27272a] border border-white/10 transition flex items-center gap-1.5"
               title="Duplicate current scenario"
             >
-              <Copy className="w-3 h-3" />
+              <Copy className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Duplicate</span>
             </button>
           </div>
@@ -575,17 +577,17 @@ export default function GradeCraftPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           
           {/* Apple Segmented Semester Tabs (S1 to S8) */}
-          <div className="apple-segmented-track inline-flex items-center gap-1 overflow-x-auto max-w-full">
+          <div className="bg-[#18181c] border border-white/[0.12] p-1.5 rounded-2xl inline-flex items-center gap-1.5 overflow-x-auto max-w-full shadow-sm">
             {[1, 2, 3, 4, 5, 6, 7, 8].map(s => {
               const isSelected = s === activeSem;
               return (
                 <button
                   key={s}
                   onClick={() => setActiveSem(s)}
-                  className={`apple-pressable px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  className={`apple-pressable px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition ${
                     isSelected 
-                      ? 'apple-segmented-thumb font-bold' 
-                      : 'text-[#86868b] hover:text-white'
+                      ? 'bg-blue-600 text-white shadow-md' 
+                      : 'text-zinc-300 hover:text-white hover:bg-white/10'
                   }`}
                 >
                   S{s}
@@ -595,23 +597,23 @@ export default function GradeCraftPage() {
           </div>
 
           {/* Mode Switcher: Default GRADE MODE vs MARKS MODE */}
-          <div className="apple-segmented-track inline-flex items-center gap-1 self-start sm:self-auto">
+          <div className="bg-[#18181c] border border-white/[0.12] p-1.5 rounded-2xl inline-flex items-center gap-1.5 self-start sm:self-auto shadow-sm">
             <button
               onClick={() => setInputMode('grades')}
-              className={`apple-pressable px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+              className={`apple-pressable px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition ${
                 inputMode === 'grades'
-                  ? 'apple-segmented-thumb'
-                  : 'text-[#86868b] hover:text-white'
+                  ? 'bg-white text-black shadow-md'
+                  : 'text-zinc-300 hover:text-white'
               }`}
             >
               Grade Mode (Default)
             </button>
             <button
               onClick={() => setInputMode('marks')}
-              className={`apple-pressable px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+              className={`apple-pressable px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition ${
                 inputMode === 'marks'
-                  ? 'apple-segmented-thumb'
-                  : 'text-[#86868b] hover:text-white'
+                  ? 'bg-white text-black shadow-md'
+                  : 'text-zinc-300 hover:text-white'
               }`}
             >
               Marks Mode (CIE + ESE)
@@ -622,38 +624,38 @@ export default function GradeCraftPage() {
 
 
         {/* 5. CHALLENGED COURSE EDUCATIONAL BANNER */}
-        <div className="bg-[#1c1c1e] rounded-2xl p-4 border border-white/[0.06] flex items-start sm:items-center gap-3">
-          <div className="p-2 rounded-xl bg-[#ff9f0a]/10 text-[#ff9f0a] shrink-0">
-            <Zap className="w-4 h-4" />
+        <div className="bg-amber-950/40 rounded-2xl p-4 sm:p-5 border border-amber-500/40 flex items-start sm:items-center gap-3.5 shadow-sm">
+          <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 shrink-0 border border-amber-500/30">
+            <Zap className="w-5 h-5" />
           </div>
-          <div className="text-xs text-[#86868b] leading-relaxed">
-            <b className="text-[#ff9f0a]">Challenged Course Rule:</b> When a course is toggled as <b className="text-white">Challenged</b>, its credits are counted in your <b className="text-white">Total Degree Credits Earned (170)</b>, but are <b className="text-[#ff9f0a]">strictly excluded</b> from the SGPA/CGPA denominator and grade calculations.
+          <div className="text-xs sm:text-sm text-amber-200 leading-relaxed">
+            <b className="text-amber-400 font-extrabold uppercase tracking-wide">Challenged Course Rule:</b> When a course is toggled as <b className="text-white font-bold">Challenged</b>, its credits are counted in your <b className="text-white font-bold">Total Degree Credits Earned (170)</b>, but are <b className="text-amber-400 font-black">strictly excluded</b> from the SGPA/CGPA denominator and grade calculations.
           </div>
         </div>
 
 
-        {/* 6. SUBJECTS LIST (2-COLUMN GRID ON WIDESCREEN DESKTOP) */}
+        {/* 6. SUBJECTS LIST (ADAPTIVE 3-4 COLUMN GRID ON WIDESCREEN DESKTOP) */}
         <section className="space-y-4">
           
           <div className="flex items-center justify-between px-1">
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
+            <h3 className="text-lg sm:text-xl font-black text-white flex items-center gap-3">
               <span>{currentSemester?.title || `Semester ${activeSem}`}</span>
-              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-[#2c2c2e] text-[#98989d]">
+              <span className="text-xs font-bold px-3 py-1 rounded-full bg-zinc-800 text-zinc-200 border border-white/10">
                 {currentSemester?.credits || 0} Credits Total
               </span>
             </h3>
 
             <button
               onClick={handleResetCurrentSem}
-              className="text-xs text-[#86868b] hover:text-[#ff453a] flex items-center gap-1 transition"
+              className="text-xs sm:text-sm font-bold text-zinc-300 hover:text-rose-400 flex items-center gap-1.5 transition"
             >
-              <RotateCcw className="w-3 h-3" />
+              <RotateCcw className="w-4 h-4" />
               <span>Reset S{activeSem}</span>
             </button>
           </div>
 
-          {/* 2-COLUMN RESPONSIVE COURSE GRID: Fills wide desktop elegantly, 1-col on mobile */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {/* ADAPTIVE WIDESCREEN GRID: 1 col on mobile, 2 on tablet, 3-4 on desktop/ultrawide */}
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4.5">
             {currentSemester?.courses.map((course, idx) => {
               
               // Calculation for this row
@@ -674,76 +676,76 @@ export default function GradeCraftPage() {
               return (
                 <div 
                   key={course.id || idx}
-                  className={`bg-[#1c1c1e] rounded-2xl p-4 sm:p-5 border transition-all flex flex-col justify-between gap-3.5 ${
+                  className={`rounded-2xl p-5 border transition-all flex flex-col justify-between gap-4 shadow-lg ${
                     isChallenged 
-                      ? 'border-[#ff9f0a]/35 bg-[#1c1c1e]/95 shadow-sm' 
-                      : 'border-white/[0.06] hover:border-white/[0.14]'
+                      ? 'bg-[#22160d] border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.15)]' 
+                      : 'bg-[#18181c] border-white/[0.14] hover:border-blue-500/40 hover:bg-[#1e1e22]'
                   }`}
                 >
                   {/* Top Part: Course Header & Badges */}
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2 min-w-0 flex-wrap">
-                        <span className="px-2 py-0.5 rounded-md text-[11px] font-bold bg-[#2c2c2e] text-white border border-white/10 shrink-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="px-2.5 py-0.5 rounded-md text-xs font-black bg-blue-600 text-white shadow-sm shrink-0">
                           Slot {course.slot}
                         </span>
-                        <span className="font-semibold text-sm sm:text-base text-white tracking-tight" title={course.name}>
+                        <h4 className="font-extrabold text-base sm:text-lg text-white tracking-tight leading-snug" title={course.name}>
                           {course.name}
-                        </span>
+                        </h4>
                       </div>
 
                       <div className="flex items-center gap-1.5 shrink-0">
                         {isChallenged && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#ff9f0a]/20 text-[#ff9f0a] border border-[#ff9f0a]/30">
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-black bg-amber-500/20 text-amber-300 border border-amber-500/40">
                             CHALLENGED
                           </span>
                         )}
                         {isAudit && (
-                          <span className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/[0.06] text-[#98989d]">
+                          <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-zinc-800 text-zinc-300 border border-white/10">
                             Pass/Fail
                           </span>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2.5 text-xs text-[#86868b] font-mono">
-                      <span>{course.code}</span>
+                    <div className="flex items-center gap-2 text-xs font-bold text-zinc-300">
+                      <span className="font-mono text-zinc-300 bg-white/5 px-2 py-0.5 rounded">{course.code}</span>
                       <span>•</span>
-                      <span className="font-sans font-medium text-white">{course.credits} Credits</span>
+                      <span className="text-emerald-400 bg-emerald-500/15 px-2 py-0.5 rounded border border-emerald-500/30">{course.credits} Credits</span>
                       <span>•</span>
-                      <span className="font-sans text-[#98989d]">{course.type}</span>
+                      <span className="text-zinc-300 bg-white/5 px-2 py-0.5 rounded">{course.type}</span>
                       {inputMode === 'marks' && (
                         <>
                           <span>•</span>
-                          <span className="font-sans text-[#30d158] font-bold">{markPercent.toFixed(1)}%</span>
+                          <span className="text-emerald-400 font-black">{markPercent.toFixed(1)}%</span>
                         </>
                       )}
                     </div>
 
                     {isChallenged && (
-                      <div className="mt-1 text-[11px] text-[#ff9f0a] flex items-center gap-1.5 bg-[#ff9f0a]/10 px-2.5 py-1 rounded-lg border border-[#ff9f0a]/20">
-                        <span>⚡</span>
-                        <span><b>Challenged Active:</b> Credits (+{course.credits}) count toward degree (170), excluded from SGPA/CGPA.</span>
+                      <div className="mt-1 text-xs text-amber-300 font-semibold flex items-center gap-2 bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/30">
+                        <span className="text-base">⚡</span>
+                        <span><b>Challenged Active:</b> Credits (+{course.credits}) count toward degree total (170), excluded from SGPA/CGPA.</span>
                       </div>
                     )}
                   </div>
 
                   {/* Bottom Controls Bar: Grade Selector / CIE Marks, Challenge Toggle, Points */}
-                  <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/[0.06]">
+                  <div className="flex flex-wrap items-center justify-between gap-3 pt-3.5 border-t border-white/[0.10]">
                     
-                    {/* A. GRADE MODE: Apple Grade Selector */}
+                    {/* A. GRADE MODE: Big Tactile Grade Selector */}
                     {inputMode === 'grades' && !isAudit && (
                       <div className="flex items-center gap-2">
-                        <label className="text-xs font-semibold text-[#86868b]">
+                        <label className="text-xs font-black uppercase tracking-wider text-zinc-300">
                           Grade:
                         </label>
                         <select
                           value={course.grade}
                           onChange={(e) => handleGradeChange(idx, e.target.value as GradeLetter)}
-                          className="apple-pressable bg-[#2c2c2e] hover:bg-[#3a3a3c] text-white font-bold text-sm px-3 py-1.5 rounded-xl border border-white/10 focus:outline-none focus:border-[#0071e3] transition cursor-pointer min-w-[76px] text-center"
+                          className="apple-pressable bg-[#27272a] hover:bg-[#3f3f46] text-white font-black text-base px-3.5 py-2 rounded-xl border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer min-w-[80px] text-center shadow-inner"
                         >
                           {GRADE_OPTIONS.map(g => (
-                            <option key={g} value={g} className="bg-[#1c1c1e] text-white">
+                            <option key={g} value={g} className="bg-[#18181c] text-white font-bold">
                               {g} ({GRADE_POINTS[g].toFixed(1)})
                             </option>
                           ))}
@@ -755,18 +757,18 @@ export default function GradeCraftPage() {
                     {inputMode === 'marks' && (
                       <div className="flex items-center gap-2.5">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-semibold text-[#86868b]">CIE:</span>
+                          <span className="text-xs font-bold text-zinc-300">CIE:</span>
                           <input
                             type="number"
                             min="0"
                             max={course.cieMax}
                             value={course.cieMarks}
                             onChange={(e) => handleMarksChange(idx, 'cieMarks', e.target.value)}
-                            className="w-16 bg-[#2c2c2e] text-white font-semibold text-center text-xs px-2 py-1 rounded-lg border border-white/10 focus:outline-none focus:border-[#0071e3]"
+                            className="w-16 bg-[#27272a] text-white font-black text-center text-sm px-2 py-1.5 rounded-lg border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           />
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <span className="text-[10px] font-semibold text-[#86868b]">ESE:</span>
+                          <span className="text-xs font-bold text-zinc-300">ESE:</span>
                           <input
                             type="number"
                             min="0"
@@ -774,7 +776,7 @@ export default function GradeCraftPage() {
                             value={course.eseMarks}
                             disabled={course.eseMax === 0}
                             onChange={(e) => handleMarksChange(idx, 'eseMarks', e.target.value)}
-                            className={`w-16 bg-[#2c2c2e] text-white font-semibold text-center text-xs px-2 py-1 rounded-lg border border-white/10 focus:outline-none focus:border-[#0071e3] ${
+                            className={`w-16 bg-[#27272a] text-white font-black text-center text-sm px-2 py-1.5 rounded-lg border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                               course.eseMax === 0 ? 'opacity-30 cursor-not-allowed' : ''
                             }`}
                           />
@@ -783,17 +785,17 @@ export default function GradeCraftPage() {
                     )}
 
                     {/* C. CHALLENGED TOGGLE SWITCH (Apple Pill Container with Label & Info Tooltip) */}
-                    <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition ${
+                    <div className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border transition ${
                       isChallenged 
-                        ? 'border-[#ff9f0a]/50 bg-[#ff9f0a]/15 text-[#ff9f0a]' 
-                        : 'border-white/[0.08] bg-[#2c2c2e]/60 text-white'
+                        ? 'border-amber-500/70 bg-amber-950/70 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.25)]' 
+                        : 'border-white/15 bg-[#27272a] text-zinc-200 hover:border-white/30'
                     }`}>
-                      <span className="text-xs font-semibold whitespace-nowrap">
+                      <span className="text-xs font-black uppercase tracking-wider whitespace-nowrap text-white">
                         Challenge
                       </span>
                       <span 
                         title="Challenged course rule: Credits count towards your 170 degree requirement, but are completely excluded from the SGPA/CGPA formula denominator and numerator."
-                        className="cursor-help text-[#86868b] hover:text-white text-xs select-none"
+                        className="cursor-help text-zinc-400 hover:text-white text-xs select-none"
                       >
                         ⓘ
                       </span>
@@ -804,15 +806,15 @@ export default function GradeCraftPage() {
                           onChange={() => handleToggleChallenged(idx)} 
                           className="sr-only peer"
                         />
-                        <div className="w-9 h-5 bg-[#3a3a3c] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#ff9f0a]"></div>
+                        <div className="w-10 h-5.5 bg-[#3f3f46] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
                       </label>
                     </div>
 
                     {/* D. CALCULATED RESULT POINTS */}
-                    <div className="text-right min-w-[56px]">
-                      <span className="text-[10px] uppercase font-semibold text-[#86868b] block">Points</span>
-                      <div className={`text-base font-bold tabular-nums ${
-                        isChallenged ? 'text-[#86868b] line-through' : (isAudit ? 'text-[#98989d]' : 'text-[#30d158]')
+                    <div className="text-right min-w-[60px]">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 block">Points</span>
+                      <div className={`text-lg sm:text-xl font-black tabular-nums ${
+                        isChallenged ? 'text-zinc-500 line-through' : (isAudit ? 'text-zinc-300' : 'text-emerald-400')
                       }`}>
                         {isChallenged ? '0.0' : (isAudit ? 'Pass' : (points * course.credits).toFixed(1))}
                       </div>
@@ -831,30 +833,30 @@ export default function GradeCraftPage() {
 
       {/* NEW INSTANCE / SCENARIO MODAL */}
       {showNewInstanceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
-          <div className="bg-[#1c1c1e] rounded-3xl p-6 max-w-md w-full border border-white/10 shadow-apple-popover space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="bg-[#18181b] rounded-3xl p-6 sm:p-7 max-w-md w-full border border-white/20 shadow-2xl space-y-5">
             <div>
-              <h3 className="text-lg font-bold text-white">Create New Scenario</h3>
-              <p className="text-xs text-[#86868b]">
+              <h3 className="text-xl font-black text-white">Create New Scenario</h3>
+              <p className="text-xs text-zinc-300 font-medium mt-1">
                 Experiment with customized grades (e.g., &quot;Lazy Study&quot;, &quot;Tryhard 9.5+&quot;, &quot;Exam Cram&quot;).
               </p>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-[#98989d] block mb-1">Scenario Name</label>
+                <label className="text-xs font-black uppercase tracking-wider text-zinc-300 block mb-1.5">Scenario Name</label>
                 <input
                   type="text"
                   placeholder="e.g. Tryhard 9.0+ 🚀"
                   value={newInstanceName}
                   onChange={(e) => setNewInstanceName(e.target.value)}
-                  className="w-full bg-[#2c2c2e] text-white text-sm px-3.5 py-2.5 rounded-xl border border-white/10 focus:outline-none focus:border-[#0071e3]"
+                  className="w-full bg-[#27272a] text-white font-bold text-sm px-4 py-3 rounded-xl border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   autoFocus
                 />
               </div>
 
               <div>
-                <label className="text-xs font-semibold text-[#98989d] block mb-1">Target CGPA Goal</label>
+                <label className="text-xs font-black uppercase tracking-wider text-zinc-300 block mb-1.5">Target CGPA Goal</label>
                 <input
                   type="number"
                   step="0.01"
@@ -862,21 +864,21 @@ export default function GradeCraftPage() {
                   max="10.0"
                   value={targetCgpaInput}
                   onChange={(e) => setTargetCgpaInput(e.target.value)}
-                  className="w-full bg-[#2c2c2e] text-white text-sm px-3.5 py-2.5 rounded-xl border border-white/10 focus:outline-none focus:border-[#0071e3]"
+                  className="w-full bg-[#27272a] text-white font-bold text-sm px-4 py-3 rounded-xl border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/[0.06]">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
               <button
                 onClick={() => setShowNewInstanceModal(false)}
-                className="apple-pressable px-4 py-2 rounded-xl text-xs font-medium text-[#86868b] hover:text-white"
+                className="apple-pressable px-4 py-2.5 rounded-xl text-xs font-bold text-zinc-300 hover:text-white"
               >
                 Cancel
               </button>
               <button
                 onClick={handleCreateInstance}
-                className="apple-pressable px-4 py-2 rounded-xl text-xs font-semibold bg-[#0071e3] text-white shadow-apple-pill"
+                className="apple-pressable px-5 py-2.5 rounded-xl text-xs font-extrabold bg-blue-600 hover:bg-blue-500 text-white shadow-lg"
               >
                 Create Scenario
               </button>
