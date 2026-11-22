@@ -14,6 +14,8 @@ export interface Course {
   isChallenged: boolean;
   isNoGradePoint: boolean; // Slot I (Health & Wellness, Life Skills, etc.), Digital 101 MOOC
   type: string; // BSC, ESC, PCC, PEC, OEC, PWS, HMC, etc.
+  canChallenge?: boolean; // Eligible for Challenge evaluation per KTU guidelines
+  precedingSem?: string;  // Preceding semester from where the challenge course can be taken
 }
 
 export interface SemesterData {

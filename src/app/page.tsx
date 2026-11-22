@@ -29,7 +29,11 @@ import {
   LogOut,
   User as UserIcon,
   Download,
-  Upload
+  Upload,
+  Undo2,
+  Redo2,
+  ChevronDown,
+  Check
 } from 'lucide-react';
 
 interface AuthUser {
@@ -55,12 +59,18 @@ export default function GradeCraftPage() {
   const [isCloudSyncing, setIsCloudSyncing] = useState<boolean>(false);
   const [cloudStatus, setCloudStatus] = useState<string>('Local (Synced)');
   
+  // Undo / Redo history stacks
+  const [history, setHistory] = useState<Record<string, Instance>[]>([]);
+  const [redoStack, setRedoStack] = useState<Record<string, Instance>[]>([]);
+  const autoSyncTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // Modal states
   const [showNewInstanceModal, setShowNewInstanceModal] = useState<boolean>(false);
   const [newInstanceName, setNewInstanceName] = useState<string>('');
   const [targetCgpaInput, setTargetCgpaInput] = useState<string>('8.50');
   const [isEditingTarget, setIsEditingTarget] = useState<boolean>(false);
   const [editingTargetVal, setEditingTargetVal] = useState<string>('');
+  const [openGradeDropdownIdx, setOpenGradeDropdownIdx] = useState<number | null>(null);
   const googleBtnRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -308,8 +318,46 @@ export default function GradeCraftPage() {
     }
   };
 
-  // Save to LocalStorage on instance changes
-  const saveInstances = (updated: Record<string, Instance>) => {
+  // Trigger background debounced auto-sync to Neon PostgreSQL
+  const triggerAutoSync = (latestInstances: Record<string, Instance>) => {
+    if (autoSyncTimerRef.current) {
+      clearTimeout(autoSyncTimerRef.current);
+    }
+    setCloudStatus('Saving changes...');
+
+    autoSyncTimerRef.current = setTimeout(async () => {
+      const currentUserId = user ? user.email : 'adithyen_user';
+      try {
+        setIsCloudSyncing(true);
+        const syncPromises = Object.values(latestInstances).map(inst =>
+          fetch('/api/instances', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: inst.id,
+              userId: currentUserId,
+              name: inst.name,
+              targetCgpa: inst.targetCgpa || 8.5,
+              dataJson: inst.semesters,
+            }),
+          })
+        );
+        await Promise.all(syncPromises);
+        setCloudStatus('Auto-synced to Neon');
+      } catch {
+        setCloudStatus('Local Mode (Saved)');
+      } finally {
+        setIsCloudSyncing(false);
+      }
+    }, 1500); // 1.5s debounce
+  };
+
+  // Save with Undo History and Auto-sync
+  const saveInstances = (updated: Record<string, Instance>, recordHistory = true) => {
+    if (recordHistory && Object.keys(instances).length > 0) {
+      setHistory(prev => [...prev.slice(-30), JSON.parse(JSON.stringify(instances))]);
+      setRedoStack([]);
+    }
     setInstances(updated);
     const currentUserId = user ? user.email : 'adithyen_user';
     try {
@@ -317,6 +365,23 @@ export default function GradeCraftPage() {
     } catch (e) {
       console.error(e);
     }
+    triggerAutoSync(updated);
+  };
+
+  const handleUndo = () => {
+    if (history.length === 0) return;
+    const previous = history[history.length - 1];
+    setHistory(prev => prev.slice(0, prev.length - 1));
+    setRedoStack(prev => [...prev, JSON.parse(JSON.stringify(instances))]);
+    saveInstances(previous, false);
+  };
+
+  const handleRedo = () => {
+    if (redoStack.length === 0) return;
+    const next = redoStack[redoStack.length - 1];
+    setRedoStack(prev => prev.slice(0, prev.length - 1));
+    setHistory(prev => [...prev, JSON.parse(JSON.stringify(instances))]);
+    saveInstances(next, false);
   };
 
   const currentInstance = instances[activeInstanceId] || instances['medium'] || null;
@@ -980,8 +1045,38 @@ export default function GradeCraftPage() {
             </button>
           </div>
 
-          {/* Quick Actions: Import / Export / Duplicate */}
+          {/* Quick Actions: Undo / Redo / Import / Export / Duplicate */}
           <div className="flex items-center gap-2 self-end md:self-auto">
+            {/* Undo Button */}
+            <button
+              onClick={handleUndo}
+              disabled={history.length === 0}
+              className={`apple-pressable p-2 rounded-xl text-xs font-bold border border-white/10 transition flex items-center gap-1 ${
+                history.length === 0
+                  ? 'text-zinc-600 bg-white/[0.02] cursor-not-allowed border-white/5'
+                  : 'text-zinc-300 hover:text-white hover:bg-[#27272a] bg-[#1c1c1e]'
+              }`}
+              title="Undo last change (Ctrl+Z)"
+            >
+              <Undo2 className="w-4 h-4" />
+            </button>
+
+            {/* Redo Button */}
+            <button
+              onClick={handleRedo}
+              disabled={redoStack.length === 0}
+              className={`apple-pressable p-2 rounded-xl text-xs font-bold border border-white/10 transition flex items-center gap-1 ${
+                redoStack.length === 0
+                  ? 'text-zinc-600 bg-white/[0.02] cursor-not-allowed border-white/5'
+                  : 'text-zinc-300 hover:text-white hover:bg-[#27272a] bg-[#1c1c1e]'
+              }`}
+              title="Redo (Ctrl+Y)"
+            >
+              <Redo2 className="w-4 h-4" />
+            </button>
+
+            <div className="h-5 w-[1px] bg-white/10 mx-0.5 hidden sm:block" />
+
             {/* Hidden File Input for Import */}
             <input 
               type="file" 
@@ -1069,17 +1164,6 @@ export default function GradeCraftPage() {
             </button>
           </div>
 
-        </div>
-
-
-        {/* 5. CHALLENGED COURSE EDUCATIONAL BANNER */}
-        <div className="bg-amber-950/40 rounded-2xl p-4 sm:p-5 border border-amber-500/40 flex items-start sm:items-center gap-3.5 shadow-sm">
-          <div className="p-2.5 rounded-xl bg-amber-500/20 text-amber-400 shrink-0 border border-amber-500/30">
-            <Zap className="w-5 h-5" />
-          </div>
-          <div className="text-xs sm:text-sm text-amber-200 leading-relaxed">
-            <b className="text-amber-400 font-extrabold uppercase tracking-wide">Challenged Course Rule:</b> When a course is toggled as <b className="text-white font-bold">Challenged</b>, its credits are counted in your <b className="text-white font-bold">Total Degree Credits Earned (170)</b>, but are <b className="text-amber-400 font-black">strictly excluded</b> from the SGPA/CGPA denominator and grade calculations.
-          </div>
         </div>
 
 
@@ -1182,23 +1266,71 @@ export default function GradeCraftPage() {
                   {/* Bottom Controls Bar: Grade Selector / CIE Marks, Challenge Toggle, Points */}
                   <div className="flex flex-wrap items-center justify-between gap-3 pt-3.5 border-t border-white/[0.10]">
                     
-                    {/* A. GRADE MODE: Big Tactile Grade Selector */}
+                    {/* A. GRADE MODE: Apple Floating Tactile Popover / Segment Selector */}
                     {inputMode === 'grades' && !isAudit && (
-                      <div className="flex items-center gap-2">
-                        <label className="text-xs font-black uppercase tracking-wider text-zinc-300">
-                          Grade:
-                        </label>
-                        <select
-                          value={course.grade}
-                          onChange={(e) => handleGradeChange(idx, e.target.value as GradeLetter)}
-                          className="apple-pressable bg-[#27272a] hover:bg-[#3f3f46] text-white font-black text-base px-3.5 py-2 rounded-xl border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 transition cursor-pointer min-w-[80px] text-center shadow-inner"
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setOpenGradeDropdownIdx(openGradeDropdownIdx === idx ? null : idx)}
+                          className={`apple-pressable flex items-center gap-2 px-3 py-1.5 rounded-xl border font-black text-sm transition shadow-sm ${
+                            course.grade === 'S'
+                              ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25'
+                              : course.grade === 'A+' || course.grade === 'A'
+                              ? 'bg-blue-500/15 border-blue-500/40 text-blue-300 hover:bg-blue-500/25'
+                              : course.grade === 'B+' || course.grade === 'B'
+                              ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/25'
+                              : course.grade === 'C+' || course.grade === 'C'
+                              ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 hover:bg-amber-500/25'
+                              : course.grade === 'F'
+                              ? 'bg-rose-500/20 border-rose-500/50 text-rose-300 hover:bg-rose-500/30'
+                              : 'bg-zinc-800 border-white/20 text-white hover:bg-zinc-700'
+                          }`}
                         >
-                          {GRADE_OPTIONS.map(g => (
-                            <option key={g} value={g} className="bg-[#18181c] text-white font-bold">
-                              {g} ({GRADE_POINTS[g].toFixed(1)})
-                            </option>
-                          ))}
-                        </select>
+                          <span className="text-xs uppercase text-zinc-400 font-bold">Grade</span>
+                          <span className="text-base font-extrabold">{course.grade}</span>
+                          <span className="text-[11px] font-mono text-zinc-400">({GRADE_POINTS[course.grade]?.toFixed(1)})</span>
+                          <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 transition-transform ${openGradeDropdownIdx === idx ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {/* Floating Apple Grade Palette Dropdown */}
+                        {openGradeDropdownIdx === idx && (
+                          <>
+                            <div 
+                              className="fixed inset-0 z-40" 
+                              onClick={() => setOpenGradeDropdownIdx(null)} 
+                            />
+                            <div className="absolute left-0 bottom-full mb-2 z-50 p-1.5 bg-[#18181b]/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl flex flex-col gap-1 w-48 animate-in fade-in zoom-in-95 duration-150">
+                              <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-zinc-400 border-b border-white/10">
+                                Select Grade
+                              </div>
+                              <div className="grid grid-cols-2 gap-1 max-h-56 overflow-y-auto p-0.5">
+                                {GRADE_OPTIONS.map((g) => {
+                                  const isSelected = course.grade === g;
+                                  return (
+                                    <button
+                                      key={g}
+                                      type="button"
+                                      onClick={() => {
+                                        handleGradeChange(idx, g);
+                                        setOpenGradeDropdownIdx(null);
+                                      }}
+                                      className={`apple-pressable flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                                        isSelected
+                                          ? 'bg-blue-600 text-white shadow-md'
+                                          : 'text-zinc-200 hover:bg-white/10 hover:text-white'
+                                      }`}
+                                    >
+                                      <span className="font-black text-sm">{g}</span>
+                                      <span className="text-[10px] font-mono opacity-70">
+                                        {GRADE_POINTS[g].toFixed(1)}
+                                      </span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                     )}
 
@@ -1233,31 +1365,37 @@ export default function GradeCraftPage() {
                       </div>
                     )}
 
-                    {/* C. CHALLENGED TOGGLE SWITCH (Apple Pill Container with Label & Info Tooltip) */}
-                    <div className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border transition ${
-                      isChallenged 
-                        ? 'border-amber-500/70 bg-amber-950/70 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.25)]' 
-                        : 'border-white/15 bg-[#27272a] text-zinc-200 hover:border-white/30'
-                    }`}>
-                      <span className="text-xs font-black uppercase tracking-wider whitespace-nowrap text-white">
-                        Challenge
-                      </span>
-                      <span 
-                        title="Challenged course rule: Credits count towards your 170 degree requirement, but are completely excluded from the SGPA/CGPA formula denominator and numerator."
-                        className="cursor-help text-zinc-400 hover:text-white text-xs select-none"
-                      >
-                        ⓘ
-                      </span>
-                      <label className="relative inline-flex items-center cursor-pointer apple-pressable">
-                        <input 
-                          type="checkbox" 
-                          checked={isChallenged} 
-                          onChange={() => handleToggleChallenged(idx)} 
-                          className="sr-only peer"
-                        />
-                        <div className="w-10 h-5.5 bg-[#3f3f46] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[3px] after:left-[3px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
-                      </label>
-                    </div>
+                    {/* C. CHALLENGED TOGGLE SWITCH — Only rendered for eligible courses per KTU Guidelines */}
+                    {course.canChallenge ? (
+                      <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition ${
+                        isChallenged 
+                          ? 'border-amber-500/70 bg-amber-950/70 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.25)]' 
+                          : 'border-white/15 bg-[#27272a] text-zinc-200 hover:border-white/30'
+                      }`}>
+                        <span className="text-[11px] font-black uppercase tracking-wider whitespace-nowrap text-white">
+                          Challenge
+                        </span>
+                        <span 
+                          title={`Challenged eligible course (${course.precedingSem ? `from ${course.precedingSem}` : 'KTU Scheme'}). Credits count towards 170 degree total, but excluded from SGPA/CGPA.`}
+                          className="cursor-help text-zinc-400 hover:text-white text-xs select-none"
+                        >
+                          ⓘ
+                        </span>
+                        <label className="relative inline-flex items-center cursor-pointer apple-pressable">
+                          <input 
+                            type="checkbox" 
+                            checked={isChallenged} 
+                            onChange={() => handleToggleChallenged(idx)} 
+                            className="sr-only peer"
+                          />
+                          <div className="w-9 h-5 bg-[#3f3f46] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+                        </label>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-[11px] text-zinc-300 bg-white/[0.04] px-2.5 py-1 rounded-lg border border-white/5 select-none" title="According to KTU 2024 regulations, this course cannot be taken as a Challenge course.">
+                        <span className="text-zinc-300">Non-Challengeable</span>
+                      </div>
+                    )}
 
                     {/* D. CALCULATED RESULT POINTS */}
                     <div className="text-right min-w-[60px]">
