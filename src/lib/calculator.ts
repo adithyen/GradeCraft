@@ -1,4 +1,4 @@
-export type GradeLetter = 'S' | 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C' | 'D' | 'P' | 'F';
+export type GradeLetter = 'S' | 'A+' | 'A' | 'B+' | 'B' | 'C+' | 'C' | 'D' | 'P' | 'F' | 'FE' | 'Ab';
 
 export interface Course {
   id: string;
@@ -46,9 +46,11 @@ export const GRADE_POINTS: Record<GradeLetter, number> = {
   'D': 6.0,
   'P': 5.5,
   'F': 0.0,
+  'FE': 0.0,
+  'Ab': 0.0,
 };
 
-export const GRADE_OPTIONS: GradeLetter[] = ['S', 'A+', 'A', 'B+', 'B', 'C+', 'C', 'D', 'P', 'F'];
+export const GRADE_OPTIONS: GradeLetter[] = ['S', 'A+', 'A', 'B+', 'B', 'C+', 'C', 'D', 'P', 'F', 'FE', 'Ab'];
 
 /**
  * KTU 2024 Scheme Marks to Grade Conversion
@@ -143,7 +145,7 @@ export function calculateSemesterMetrics(
       points = markRes.points;
     }
 
-    const isPassed = effectiveGrade !== 'F';
+    const isPassed = effectiveGrade !== 'F' && effectiveGrade !== 'FE' && effectiveGrade !== 'Ab';
 
     if (isPassed) {
       earnedCredits += c.credits;

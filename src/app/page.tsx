@@ -1281,7 +1281,7 @@ export default function GradeCraftPage() {
                               ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/25'
                               : course.grade === 'C+' || course.grade === 'C'
                               ? 'bg-amber-500/15 border-amber-500/40 text-amber-300 hover:bg-amber-500/25'
-                              : course.grade === 'F'
+                              : course.grade === 'F' || course.grade === 'FE' || course.grade === 'Ab'
                               ? 'bg-rose-500/20 border-rose-500/50 text-rose-300 hover:bg-rose-500/30'
                               : 'bg-zinc-800 border-white/20 text-white hover:bg-zinc-700'
                           }`}
@@ -1292,20 +1292,22 @@ export default function GradeCraftPage() {
                           <ChevronDown className={`w-3.5 h-3.5 text-zinc-400 transition-transform ${openGradeDropdownIdx === idx ? 'rotate-180' : ''}`} />
                         </button>
 
-                        {/* Floating Apple Grade Palette Dropdown */}
+                        {/* Floating Apple Grade Palette Dropdown (Single vertical column) */}
                         {openGradeDropdownIdx === idx && (
                           <>
                             <div 
                               className="fixed inset-0 z-40" 
                               onClick={() => setOpenGradeDropdownIdx(null)} 
                             />
-                            <div className="absolute left-0 bottom-full mb-2 z-50 p-1.5 bg-[#18181b]/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl flex flex-col gap-1 w-48 animate-in fade-in zoom-in-95 duration-150">
-                              <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-zinc-400 border-b border-white/10">
-                                Select Grade
+                            <div className="absolute left-0 bottom-full mb-2 z-50 p-1.5 bg-[#18181b]/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl flex flex-col gap-1 w-52 max-h-72 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 scrollbar-thin">
+                              <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-zinc-400 border-b border-white/10 sticky top-0 bg-[#18181b] z-10 flex items-center justify-between">
+                                <span>Select Grade</span>
+                                <span className="text-[9px] text-zinc-500">Points</span>
                               </div>
-                              <div className="grid grid-cols-2 gap-1 max-h-56 overflow-y-auto p-0.5">
+                              <div className="flex flex-col gap-1 p-0.5">
                                 {GRADE_OPTIONS.map((g) => {
                                   const isSelected = course.grade === g;
+                                  const isFailOrAbsent = g === 'F' || g === 'FE' || g === 'Ab';
                                   return (
                                     <button
                                       key={g}
@@ -1314,14 +1316,20 @@ export default function GradeCraftPage() {
                                         handleGradeChange(idx, g);
                                         setOpenGradeDropdownIdx(null);
                                       }}
-                                      className={`apple-pressable flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-bold transition ${
+                                      className={`apple-pressable flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-bold transition ${
                                         isSelected
                                           ? 'bg-blue-600 text-white shadow-md'
+                                          : isFailOrAbsent
+                                          ? 'text-rose-300 hover:bg-rose-500/20 hover:text-white'
                                           : 'text-zinc-200 hover:bg-white/10 hover:text-white'
                                       }`}
                                     >
-                                      <span className="font-black text-sm">{g}</span>
-                                      <span className="text-[10px] font-mono opacity-70">
+                                      <div className="flex items-center gap-2">
+                                        <span className="font-black text-sm">{g}</span>
+                                        {g === 'FE' && <span className="text-[10px] text-zinc-400 font-normal">(Eligibility Fail)</span>}
+                                        {g === 'Ab' && <span className="text-[10px] text-zinc-400 font-normal">(Absent)</span>}
+                                      </div>
+                                      <span className="text-[11px] font-mono opacity-80 font-bold">
                                         {GRADE_POINTS[g].toFixed(1)}
                                       </span>
                                     </button>
@@ -1366,7 +1374,7 @@ export default function GradeCraftPage() {
                     )}
 
                     {/* C. CHALLENGED TOGGLE SWITCH — Only rendered for eligible courses per KTU Guidelines */}
-                    {course.canChallenge ? (
+                    {course.canChallenge && (
                       <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition ${
                         isChallenged 
                           ? 'border-amber-500/70 bg-amber-950/70 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.25)]' 
@@ -1390,10 +1398,6 @@ export default function GradeCraftPage() {
                           />
                           <div className="w-9 h-5 bg-[#3f3f46] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
                         </label>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1.5 text-[11px] text-zinc-300 bg-white/[0.04] px-2.5 py-1 rounded-lg border border-white/5 select-none" title="According to KTU 2024 regulations, this course cannot be taken as a Challenge course.">
-                        <span className="text-zinc-300">Non-Challengeable</span>
                       </div>
                     )}
 
