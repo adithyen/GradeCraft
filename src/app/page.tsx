@@ -1,24 +1,26 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { 
-  Course, 
-  Instance, 
-  GradeLetter, 
-  GRADE_POINTS, 
-  GRADE_OPTIONS, 
-  getGradeFromMarks, 
-  calculateSemesterMetrics, 
-  getClassification 
+import {
+  Course,
+  Instance,
+  GradeLetter,
+  GRADE_POINTS,
+  GRADE_OPTIONS,
+  getGradeFromMarks,
+  calculateSemesterMetrics,
+  getClassification,
+  isCourseChallengeable,
+  normalizeInstances
 } from '@/lib/calculator';
 import { KTU_2024_AIML_CURRICULUM, getDefaultInstances } from '@/data/ktu2024';
-import { 
-  Plus, 
-  Trash2, 
-  Copy, 
-  RotateCcw, 
-  Cloud, 
-  GraduationCap, 
+import {
+  Plus,
+  Trash2,
+  Copy,
+  RotateCcw,
+  Cloud,
+  GraduationCap,
   ArrowRight,
   Zap,
   BarChart2,
@@ -49,16 +51,16 @@ export default function GradeCraftPage() {
   const [instances, setInstances] = useState<Record<string, Instance>>({});
   const [activeInstanceId, setActiveInstanceId] = useState<string>('medium');
   const [activeSem, setActiveSem] = useState<number>(5);
-  
+
   // Default mode is 'grades' as requested
   const [inputMode, setInputMode] = useState<'grades' | 'marks'>('grades');
-  
+
   // Predict up to semester (e.g. S1 to S5, or full S8)
   const [predictUpToSem, setPredictUpToSem] = useState<number>(5);
-  
+
   const [isCloudSyncing, setIsCloudSyncing] = useState<boolean>(false);
   const [cloudStatus, setCloudStatus] = useState<string>('Local (Synced)');
-  
+
   // Undo / Redo history stacks
   const [history, setHistory] = useState<Record<string, Instance>[]>([]);
   const [redoStack, setRedoStack] = useState<Record<string, Instance>[]>([]);
@@ -96,7 +98,7 @@ export default function GradeCraftPage() {
       try {
         currentUser = JSON.parse(savedUserJson);
         setUser(currentUser);
-      } catch {}
+      } catch { }
     }
 
     const currentUserId = currentUser ? currentUser.email : 'adithyen_user';
@@ -109,19 +111,19 @@ export default function GradeCraftPage() {
         const parsed = JSON.parse(saved);
         // Verify parsed local data has valid semesters structure
         if (parsed && typeof parsed === 'object' && Object.values(parsed).some((inst: any) => inst?.semesters && inst?.semesters[1]?.courses)) {
-          localData = parsed;
+          localData = normalizeInstances(parsed);
           setInstances(localData);
         } else {
-          localData = getDefaultInstances();
+          localData = normalizeInstances(getDefaultInstances());
           setInstances(localData);
         }
       } else {
-        const defaults = getDefaultInstances();
+        const defaults = normalizeInstances(getDefaultInstances());
         localData = defaults;
         setInstances(defaults);
       }
     } catch {
-      localData = getDefaultInstances();
+      localData = normalizeInstances(getDefaultInstances());
       setInstances(localData);
     }
 
@@ -130,12 +132,12 @@ export default function GradeCraftPage() {
       .then(res => res.json())
       .then(data => {
         if (data.instances && data.instances.length > 0) {
-          const cloudMap: Record<string, Instance> = { ...localData };
+          const rawMap: Record<string, Instance> = { ...localData };
           data.instances.forEach((row: any) => {
             const semData = typeof row.data_json === 'string' ? JSON.parse(row.data_json) : row.data_json;
             // Guard against corrupted or dummy rows that don't have KTU semester structure
             if (!semData || !semData[1] || !semData[1].courses) return;
-            cloudMap[row.id] = {
+            rawMap[row.id] = {
               id: row.id,
               name: row.name,
               targetCgpa: row.target_cgpa ? parseFloat(row.target_cgpa) : 8.5,
@@ -144,10 +146,11 @@ export default function GradeCraftPage() {
               updatedAt: row.updated_at || new Date().toISOString(),
             };
           });
+          const cloudMap = normalizeInstances(rawMap);
           setInstances(cloudMap);
           try {
             localStorage.setItem(storageKey, JSON.stringify(cloudMap));
-          } catch {}
+          } catch { }
           setCloudStatus('Neon Cloud Synced');
           // If activeInstanceId is missing or corrupted, snap to 'medium' or first valid scenario
           setActiveInstanceId(prev => (cloudMap[prev] ? prev : Object.keys(cloudMap)[0] || 'medium'));
@@ -163,7 +166,7 @@ export default function GradeCraftPage() {
   // 2. Setup Google Sign-In button
   useEffect(() => {
     const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '628041736031-spsf2l1a7erq3rnr559i593kuujq0l6s.apps.googleusercontent.com';
-    
+
     const initGoogle = () => {
       if (typeof window !== 'undefined' && (window as any).google && (window as any).google.accounts) {
         (window as any).google.accounts.id.initialize({
@@ -198,7 +201,7 @@ export default function GradeCraftPage() {
           .join('')
       );
       const payload = JSON.parse(jsonPayload);
-      
+
       const authUser: AuthUser = {
         id: payload.sub,
         name: payload.name || payload.email.split('@')[0],
@@ -397,7 +400,7 @@ export default function GradeCraftPage() {
   // B. Cumulative CGPA up to selected semester (e.g. S1 to S5)
   const cumulativeMetrics = useMemo(() => {
     if (!currentInstance) return { cgpa: 0, totalGradedCredits: 0, totalEarnedCredits: 0, totalChallengedCredits: 0, classification: 'First Class' };
-    
+
     let totalWeightedPoints = 0;
     let totalGradedCredits = 0;
     let totalEarnedCredits = 0;
@@ -611,8 +614,8 @@ export default function GradeCraftPage() {
         }
 
         saveInstances(importedInstances);
-        const firstKey = parsed.activeInstance && importedInstances[parsed.activeInstance] 
-          ? parsed.activeInstance 
+        const firstKey = parsed.activeInstance && importedInstances[parsed.activeInstance]
+          ? parsed.activeInstance
           : Object.keys(importedInstances)[0];
         if (firstKey) setActiveInstanceId(firstKey);
         alert('Data imported successfully!');
@@ -633,7 +636,7 @@ export default function GradeCraftPage() {
 
     try {
       // Sync ALL instances to Neon PostgreSQL in parallel for this specific user
-      const syncPromises = Object.values(instances).map(inst => 
+      const syncPromises = Object.values(instances).map(inst =>
         fetch('/api/instances', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -668,7 +671,7 @@ export default function GradeCraftPage() {
         setInstances(cloudMap);
         try {
           localStorage.setItem(storageKey, JSON.stringify(cloudMap));
-        } catch {}
+        } catch { }
       }
 
       setCloudStatus('Neon Cloud Synced');
@@ -693,11 +696,11 @@ export default function GradeCraftPage() {
 
   return (
     <div className="min-h-screen bg-[#09090b] text-[#f4f4f5] pb-24">
-      
+
       {/* 1. APPLE NAVIGATION BAR — Full Width */}
       <header className="sticky top-0 z-40 bg-[#09090b]/90 backdrop-blur-2xl border-b border-white/[0.12] w-full">
         <div className="w-full px-4 sm:px-6 md:px-8 xl:px-12 h-16 flex items-center justify-between gap-4">
-          
+
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-600/20 border border-blue-500/40 flex items-center justify-center text-white font-black text-lg shadow-sm">
               <GraduationCap className="w-6 h-6 text-blue-400" />
@@ -730,12 +733,12 @@ export default function GradeCraftPage() {
             {user ? (
               <div className="flex items-center gap-2.5 bg-[#18181b] border border-white/20 px-3.5 py-1.5 rounded-xl shadow-md">
                 {user.picture ? (
-                  <img 
-                    src={user.picture} 
-                    alt={user.name} 
+                  <img
+                    src={user.picture}
+                    alt={user.name}
                     referrerPolicy="no-referrer"
                     crossOrigin="anonymous"
-                    className="w-7 h-7 rounded-full border border-blue-400/50 object-cover shadow-sm" 
+                    className="w-7 h-7 rounded-full border border-blue-400/50 object-cover shadow-sm"
                   />
                 ) : (
                   <div className="w-7 h-7 rounded-full bg-blue-600 flex items-center justify-center text-xs font-black text-white shadow-sm">
@@ -768,7 +771,7 @@ export default function GradeCraftPage() {
 
         {/* 2. APPLE METRICS & ACADEMIC FORECAST HERO CARD */}
         <section className="bg-[#18181b] rounded-3xl p-6 sm:p-8 border border-white/[0.14] shadow-2xl relative overflow-hidden">
-          
+
           {/* Top Info Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.10]">
             <div>
@@ -790,11 +793,10 @@ export default function GradeCraftPage() {
                   <button
                     key={semNum}
                     onClick={() => setPredictUpToSem(semNum)}
-                    className={`apple-pressable px-3 py-1.5 rounded-xl text-xs font-extrabold transition ${
-                      predictUpToSem === semNum
-                        ? 'bg-blue-600 text-white shadow-md'
-                        : 'text-zinc-300 hover:text-white hover:bg-white/10'
-                    }`}
+                    className={`apple-pressable px-3 py-1.5 rounded-xl text-xs font-extrabold transition ${predictUpToSem === semNum
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'text-zinc-300 hover:text-white hover:bg-white/10'
+                      }`}
                   >
                     S{semNum}
                   </button>
@@ -805,7 +807,7 @@ export default function GradeCraftPage() {
 
           {/* Key Metrics Display: 4 High-Visibility Bold Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-6">
-            
+
             {/* Metric 1: Cumulative CGPA (S1 to S{predictUpToSem}) */}
             <div className="space-y-1.5 bg-[#121214] p-5 rounded-2xl border border-white/[0.08]">
               <div className="flex items-center justify-between">
@@ -848,7 +850,7 @@ export default function GradeCraftPage() {
                 {cumulativeMetrics.totalEarnedCredits} <span className="text-2xl font-bold text-zinc-400">/ 170</span>
               </div>
               <div className="w-full bg-zinc-800 h-3 rounded-full overflow-hidden mt-3 p-0.5 border border-white/10">
-                <div 
+                <div
                   className="bg-blue-500 h-full rounded-full transition-all duration-300 shadow-[0_0_12px_rgba(59,130,246,0.6)]"
                   style={{ width: `${Math.min(100, (cumulativeMetrics.totalEarnedCredits / 170) * 100)}%` }}
                 />
@@ -904,7 +906,7 @@ export default function GradeCraftPage() {
                   />
                 </div>
               ) : (
-                <div 
+                <div
                   onClick={() => {
                     setEditingTargetVal((currentInstance?.targetCgpa || 8.5).toFixed(2));
                     setIsEditingTarget(true);
@@ -917,8 +919,8 @@ export default function GradeCraftPage() {
               )}
 
               <p className="text-sm font-bold pt-1">
-                {cumulativeMetrics.cgpa >= (currentInstance?.targetCgpa || 8.5) 
-                  ? <span className="text-emerald-400 font-extrabold">✓ Exceeding Goal (+{(cumulativeMetrics.cgpa - (currentInstance?.targetCgpa || 8.5)).toFixed(2)})</span> 
+                {cumulativeMetrics.cgpa >= (currentInstance?.targetCgpa || 8.5)
+                  ? <span className="text-emerald-400 font-extrabold">✓ Exceeding Goal (+{(cumulativeMetrics.cgpa - (currentInstance?.targetCgpa || 8.5)).toFixed(2)})</span>
                   : <span className="text-amber-400 font-extrabold">Goal Delta: -{((currentInstance?.targetCgpa || 8.5) - cumulativeMetrics.cgpa).toFixed(2)}</span>}
               </p>
             </div>
@@ -946,32 +948,29 @@ export default function GradeCraftPage() {
                     key={st.sem}
                     onClick={() => setActiveSem(st.sem)}
                     title={`Semester ${st.sem}: SGPA ${st.sgpa.toFixed(2)} (${st.credits} Credits)`}
-                    className={`apple-pressable flex flex-col items-center justify-end p-2.5 rounded-xl transition group ${
-                      isSelected 
-                        ? 'bg-blue-600/20 ring-2 ring-blue-500 scale-105' 
-                        : 'hover:bg-white/[0.06]'
-                    }`}
+                    className={`apple-pressable flex flex-col items-center justify-end p-2.5 rounded-xl transition group ${isSelected
+                      ? 'bg-blue-600/20 ring-2 ring-blue-500 scale-105'
+                      : 'hover:bg-white/[0.06]'
+                      }`}
                   >
                     <span className="text-xs font-black tabular-nums text-white mb-2">
                       {st.sgpa.toFixed(2)}
                     </span>
                     <div className="w-full max-w-[36px] h-20 bg-zinc-800 rounded-full overflow-hidden flex flex-col justify-end p-0.5 border border-white/10">
-                      <div 
-                        className={`w-full rounded-full transition-all duration-300 ${
-                          !st.inPredictionRange
-                            ? 'bg-zinc-600'
-                            : st.sgpa >= 9.0 
-                              ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]' 
-                              : st.sgpa >= 8.0 
-                                ? 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]' 
-                                : 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]'
-                        }`}
+                      <div
+                        className={`w-full rounded-full transition-all duration-300 ${!st.inPredictionRange
+                          ? 'bg-zinc-600'
+                          : st.sgpa >= 9.0
+                            ? 'bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]'
+                            : st.sgpa >= 8.0
+                              ? 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
+                              : 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.5)]'
+                          }`}
                         style={{ height: `${heightPercent}%` }}
                       />
                     </div>
-                    <span className={`text-xs font-black mt-2 ${
-                      isSelected ? 'text-blue-400' : 'text-zinc-200 group-hover:text-white'
-                    }`}>
+                    <span className={`text-xs font-black mt-2 ${isSelected ? 'text-blue-400' : 'text-zinc-200 group-hover:text-white'
+                      }`}>
                       S{st.sem}
                     </span>
                   </button>
@@ -987,7 +986,7 @@ export default function GradeCraftPage() {
                 <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
                 <span>Full Degree (S1–S8) Projected CGPA with current scenario settings: <b className="text-white font-extrabold">{degreeProjection.cgpa.toFixed(2)}</b> ({degreeProjection.totalEarnedCredits} total credits)</span>
               </div>
-              <button 
+              <button
                 onClick={() => setPredictUpToSem(8)}
                 className="text-blue-400 hover:text-blue-300 hover:underline font-bold flex items-center gap-1.5"
               >
@@ -1001,23 +1000,22 @@ export default function GradeCraftPage() {
 
         {/* 3. SCENARIO / INSTANCE MANAGEMENT BAR */}
         <section className="bg-[#18181b] rounded-2xl p-4 border border-white/[0.12] flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-md">
-          
+
           <div className="flex items-center gap-2.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
             <span className="text-xs font-black text-zinc-300 uppercase tracking-widest pl-1 whitespace-nowrap">
               Scenarios:
             </span>
-            
+
             {Object.values(instances).map((inst) => {
               const isActive = inst.id === activeInstanceId;
               return (
                 <div key={inst.id} className="relative group flex items-center">
                   <button
                     onClick={() => setActiveInstanceId(inst.id)}
-                    className={`apple-pressable px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition whitespace-nowrap flex items-center gap-2 ${
-                      isActive 
-                        ? 'bg-white text-black shadow-lg font-black' 
-                        : 'bg-[#27272a] text-zinc-200 hover:text-white hover:bg-[#3f3f46] border border-white/10'
-                    }`}
+                    className={`apple-pressable px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition whitespace-nowrap flex items-center gap-2 ${isActive
+                      ? 'bg-white text-black shadow-lg font-black'
+                      : 'bg-[#27272a] text-zinc-200 hover:text-white hover:bg-[#3f3f46] border border-white/10'
+                      }`}
                   >
                     <span>{inst.name}</span>
                   </button>
@@ -1051,11 +1049,10 @@ export default function GradeCraftPage() {
             <button
               onClick={handleUndo}
               disabled={history.length === 0}
-              className={`apple-pressable p-2 rounded-xl text-xs font-bold border border-white/10 transition flex items-center gap-1 ${
-                history.length === 0
-                  ? 'text-zinc-600 bg-white/[0.02] cursor-not-allowed border-white/5'
-                  : 'text-zinc-300 hover:text-white hover:bg-[#27272a] bg-[#1c1c1e]'
-              }`}
+              className={`apple-pressable p-2 rounded-xl text-xs font-bold border border-white/10 transition flex items-center gap-1 ${history.length === 0
+                ? 'text-zinc-600 bg-white/[0.02] cursor-not-allowed border-white/5'
+                : 'text-zinc-300 hover:text-white hover:bg-[#27272a] bg-[#1c1c1e]'
+                }`}
               title="Undo last change (Ctrl+Z)"
             >
               <Undo2 className="w-4 h-4" />
@@ -1065,11 +1062,10 @@ export default function GradeCraftPage() {
             <button
               onClick={handleRedo}
               disabled={redoStack.length === 0}
-              className={`apple-pressable p-2 rounded-xl text-xs font-bold border border-white/10 transition flex items-center gap-1 ${
-                redoStack.length === 0
-                  ? 'text-zinc-600 bg-white/[0.02] cursor-not-allowed border-white/5'
-                  : 'text-zinc-300 hover:text-white hover:bg-[#27272a] bg-[#1c1c1e]'
-              }`}
+              className={`apple-pressable p-2 rounded-xl text-xs font-bold border border-white/10 transition flex items-center gap-1 ${redoStack.length === 0
+                ? 'text-zinc-600 bg-white/[0.02] cursor-not-allowed border-white/5'
+                : 'text-zinc-300 hover:text-white hover:bg-[#27272a] bg-[#1c1c1e]'
+                }`}
               title="Redo (Ctrl+Y)"
             >
               <Redo2 className="w-4 h-4" />
@@ -1078,12 +1074,12 @@ export default function GradeCraftPage() {
             <div className="h-5 w-[1px] bg-white/10 mx-0.5 hidden sm:block" />
 
             {/* Hidden File Input for Import */}
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleImportData} 
-              accept=".json" 
-              className="hidden" 
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImportData}
+              accept=".json"
+              className="hidden"
             />
 
             <button
@@ -1119,7 +1115,7 @@ export default function GradeCraftPage() {
 
         {/* 4. CONTROLS BAR: SEMESTER TABS & INPUT MODE SWITCH */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          
+
           {/* Apple Segmented Semester Tabs (S1 to S8) */}
           <div className="bg-[#18181c] border border-white/[0.12] p-1.5 rounded-2xl inline-flex items-center gap-1.5 overflow-x-auto max-w-full shadow-sm">
             {[1, 2, 3, 4, 5, 6, 7, 8].map(s => {
@@ -1128,11 +1124,10 @@ export default function GradeCraftPage() {
                 <button
                   key={s}
                   onClick={() => setActiveSem(s)}
-                  className={`apple-pressable px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition ${
-                    isSelected 
-                      ? 'bg-blue-600 text-white shadow-md' 
-                      : 'text-zinc-300 hover:text-white hover:bg-white/10'
-                  }`}
+                  className={`apple-pressable px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition ${isSelected
+                    ? 'bg-blue-600 text-white shadow-md'
+                    : 'text-zinc-300 hover:text-white hover:bg-white/10'
+                    }`}
                 >
                   S{s}
                 </button>
@@ -1144,21 +1139,19 @@ export default function GradeCraftPage() {
           <div className="bg-[#18181c] border border-white/[0.12] p-1.5 rounded-2xl inline-flex items-center gap-1.5 self-start sm:self-auto shadow-sm">
             <button
               onClick={() => setInputMode('grades')}
-              className={`apple-pressable px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition ${
-                inputMode === 'grades'
-                  ? 'bg-white text-black shadow-md'
-                  : 'text-zinc-300 hover:text-white'
-              }`}
+              className={`apple-pressable px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition ${inputMode === 'grades'
+                ? 'bg-white text-black shadow-md'
+                : 'text-zinc-300 hover:text-white'
+                }`}
             >
               Grade Mode (Default)
             </button>
             <button
               onClick={() => setInputMode('marks')}
-              className={`apple-pressable px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition ${
-                inputMode === 'marks'
-                  ? 'bg-white text-black shadow-md'
-                  : 'text-zinc-300 hover:text-white'
-              }`}
+              className={`apple-pressable px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition ${inputMode === 'marks'
+                ? 'bg-white text-black shadow-md'
+                : 'text-zinc-300 hover:text-white'
+                }`}
             >
               Marks Mode (CIE + ESE)
             </button>
@@ -1169,7 +1162,7 @@ export default function GradeCraftPage() {
 
         {/* 6. SUBJECTS LIST (ADAPTIVE 3-4 COLUMN GRID ON WIDESCREEN DESKTOP) */}
         <section className="space-y-4">
-          
+
           <div className="flex items-center justify-between px-1">
             <h3 className="text-lg sm:text-xl font-black text-white flex items-center gap-3">
               <span>{currentSemester?.title || `Semester ${activeSem}`}</span>
@@ -1190,7 +1183,7 @@ export default function GradeCraftPage() {
           {/* ADAPTIVE WIDESCREEN GRID: 1 col on mobile, 2 on tablet, 3-4 on desktop/ultrawide */}
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4.5">
             {currentSemester?.courses.map((course, idx) => {
-              
+
               // Calculation for this row
               let displayGrade = course.grade;
               let points = GRADE_POINTS[course.grade] ?? 0;
@@ -1207,13 +1200,12 @@ export default function GradeCraftPage() {
               const isAudit = course.isNoGradePoint;
 
               return (
-                <div 
+                <div
                   key={course.id || idx}
-                  className={`rounded-2xl p-5 border transition-all flex flex-col justify-between gap-4 shadow-lg ${
-                    isChallenged 
-                      ? 'bg-[#22160d] border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.15)]' 
-                      : 'bg-[#18181c] border-white/[0.14] hover:border-blue-500/40 hover:bg-[#1e1e22]'
-                  }`}
+                  className={`rounded-2xl p-5 border transition-all flex flex-col justify-between gap-4 shadow-lg ${isChallenged
+                    ? 'bg-[#22160d] border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.15)]'
+                    : 'bg-[#18181c] border-white/[0.14] hover:border-blue-500/40 hover:bg-[#1e1e22]'
+                    }`}
                 >
                   {/* Top Part: Course Header & Badges */}
                   <div className="space-y-2">
@@ -1265,17 +1257,16 @@ export default function GradeCraftPage() {
 
                   {/* Bottom Controls Bar: Grade Selector / CIE Marks, Challenge Toggle, Points */}
                   <div className="flex flex-wrap items-center justify-between gap-3 pt-3.5 border-t border-white/[0.10]">
-                    
+
                     {/* A. GRADE MODE: Apple Floating Tactile Popover / Segment Selector */}
                     {inputMode === 'grades' && !isAudit && (
                       <div className="relative">
                         <button
                           type="button"
                           onClick={() => setOpenGradeDropdownIdx(openGradeDropdownIdx === idx ? null : idx)}
-                          className={`apple-pressable flex items-center gap-2 px-3 py-1.5 rounded-xl border font-black text-sm transition shadow-sm ${
-                            course.grade === 'S'
-                              ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25'
-                              : course.grade === 'A+' || course.grade === 'A'
+                          className={`apple-pressable flex items-center gap-2 px-3 py-1.5 rounded-xl border font-black text-sm transition shadow-sm ${course.grade === 'S'
+                            ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/25'
+                            : course.grade === 'A+' || course.grade === 'A'
                               ? 'bg-blue-500/15 border-blue-500/40 text-blue-300 hover:bg-blue-500/25'
                               : course.grade === 'B+' || course.grade === 'B'
                               ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/25'
@@ -1295,9 +1286,9 @@ export default function GradeCraftPage() {
                         {/* Floating Apple Grade Palette Dropdown (Single vertical column) */}
                         {openGradeDropdownIdx === idx && (
                           <>
-                            <div 
-                              className="fixed inset-0 z-40" 
-                              onClick={() => setOpenGradeDropdownIdx(null)} 
+                            <div
+                              className="fixed inset-0 z-40"
+                              onClick={() => setOpenGradeDropdownIdx(null)}
                             />
                             <div className="absolute left-0 bottom-full mb-2 z-50 p-1.5 bg-[#18181b]/95 backdrop-blur-xl border border-white/20 rounded-2xl shadow-2xl flex flex-col gap-1 w-52 max-h-72 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 scrollbar-thin">
                               <div className="px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-zinc-400 border-b border-white/10 sticky top-0 bg-[#18181b] z-10 flex items-center justify-between">
@@ -1365,35 +1356,33 @@ export default function GradeCraftPage() {
                             value={course.eseMarks}
                             disabled={course.eseMax === 0}
                             onChange={(e) => handleMarksChange(idx, 'eseMarks', e.target.value)}
-                            className={`w-16 bg-[#27272a] text-white font-black text-center text-sm px-2 py-1.5 rounded-lg border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                              course.eseMax === 0 ? 'opacity-30 cursor-not-allowed' : ''
-                            }`}
+                            className={`w-16 bg-[#27272a] text-white font-black text-center text-sm px-2 py-1.5 rounded-lg border border-white/20 focus:outline-none focus:ring-2 focus:ring-blue-500 ${course.eseMax === 0 ? 'opacity-30 cursor-not-allowed' : ''
+                              }`}
                           />
                         </div>
                       </div>
                     )}
 
                     {/* C. CHALLENGED TOGGLE SWITCH — Only rendered for eligible courses per KTU Guidelines */}
-                    {course.canChallenge && (
-                      <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition ${
-                        isChallenged 
-                          ? 'border-amber-500/70 bg-amber-950/70 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.25)]' 
-                          : 'border-white/15 bg-[#27272a] text-zinc-200 hover:border-white/30'
-                      }`}>
+                    {isCourseChallengeable(course, activeSem) && (
+                      <div className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border transition ${isChallenged
+                        ? 'border-amber-500/70 bg-amber-950/70 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.25)]'
+                        : 'border-white/15 bg-[#27272a] text-zinc-200 hover:border-white/30'
+                        }`}>
                         <span className="text-[11px] font-black uppercase tracking-wider whitespace-nowrap text-white">
                           Challenge
                         </span>
-                        <span 
-                          title={`Challenged eligible course (${course.precedingSem ? `from ${course.precedingSem}` : 'KTU Scheme'}). Credits count towards 170 degree total, but excluded from SGPA/CGPA.`}
+                        <span
+                          title={`Challenged eligible course (${course.precedingSem ? `from ${course.precedingSem}` : 'KTU Guidelines'}). Credits count towards 170 degree total, but excluded from SGPA/CGPA.`}
                           className="cursor-help text-zinc-400 hover:text-white text-xs select-none"
                         >
                           ⓘ
                         </span>
                         <label className="relative inline-flex items-center cursor-pointer apple-pressable">
-                          <input 
-                            type="checkbox" 
-                            checked={isChallenged} 
-                            onChange={() => handleToggleChallenged(idx)} 
+                          <input
+                            type="checkbox"
+                            checked={isChallenged}
+                            onChange={() => handleToggleChallenged(idx)}
                             className="sr-only peer"
                           />
                           <div className="w-9 h-5 bg-[#3f3f46] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
@@ -1404,9 +1393,8 @@ export default function GradeCraftPage() {
                     {/* D. CALCULATED RESULT POINTS */}
                     <div className="text-right min-w-[60px]">
                       <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 block">Points</span>
-                      <div className={`text-lg sm:text-xl font-black tabular-nums ${
-                        isChallenged ? 'text-zinc-500 line-through' : (isAudit ? 'text-zinc-300' : 'text-emerald-400')
-                      }`}>
+                      <div className={`text-lg sm:text-xl font-black tabular-nums ${isChallenged ? 'text-zinc-500 line-through' : (isAudit ? 'text-zinc-300' : 'text-emerald-400')
+                        }`}>
                         {isChallenged ? '0.0' : (isAudit ? 'Pass' : (points * course.credits).toFixed(1))}
                       </div>
                     </div>

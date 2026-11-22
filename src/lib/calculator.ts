@@ -52,6 +52,124 @@ export const GRADE_POINTS: Record<GradeLetter, number> = {
 
 export const GRADE_OPTIONS: GradeLetter[] = ['S', 'A+', 'A', 'B+', 'B', 'C+', 'C', 'D', 'P', 'F', 'FE', 'Ab'];
 
+export const CHALLENGEABLE_COURSE_CODES = new Set([
+  'GAMAT201', // S2 Group Specific Mathematics-2
+  'GAPHT121', // S2 Physics for Engineers (or GAPHT121/GXCYT122)
+  'GXCYT122', // S2 Chemistry for Engineers
+  'GXEST204', // S2 Programming in C
+  'GAMAT301', // S3 Group Specific Mathematics-3
+  'GAMAT401', // S4 Group Specific Mathematics-4
+  'PECMT74N', // S7 Level-3 PE Course
+  'PECMT75N', // S7 Level-3 PE Course
+  'OECMT72N', // S7 Open Elective
+  'UEHUT704', // S7 HMC Elective
+  'PECMT86N', // S8 Level-3 PE Course
+  'OECMT83N', // S8 Open Elective
+  'UEHUT803', // S8 HMC Elective (Organizational Behaviour & Business Comm)
+]);
+
+export function isCourseChallengeable(course: Course, semNumber: number): boolean {
+  if (!course) return false;
+
+  // S2: Group Specific Mathematics-2, Physics/Chemistry, Programming in C
+  if (semNumber === 2) {
+    if (course.code && (course.code === 'GAMAT201' || course.code === 'GAPHT121' || course.code === 'GXCYT122' || course.code === 'GXEST204')) return true;
+    if (course.slot === 'A' || course.slot === 'B' || course.slot === 'D') return true;
+    const name = (course.name || '').toLowerCase();
+    if (name.includes('mathematics') || name.includes('physics') || name.includes('chemistry') || name.includes('programming in c')) return true;
+    return false;
+  }
+
+  // S3: Group Specific Mathematics-3
+  if (semNumber === 3) {
+    if (course.code === 'GAMAT301' || course.slot === 'A') return true;
+    const name = (course.name || '').toLowerCase();
+    if (name.includes('mathematics')) return true;
+    return false;
+  }
+
+  // S4: Group Specific Mathematics-4
+  if (semNumber === 4) {
+    if (course.code === 'GAMAT401' || course.slot === 'A') return true;
+    const name = (course.name || '').toLowerCase();
+    if (name.includes('mathematics')) return true;
+    return false;
+  }
+
+  // S7: One OE, Two Level-3 PE Courses, HMC Elective
+  if (semNumber === 7) {
+    if (course.code && (course.code === 'PECMT74N' || course.code === 'PECMT75N' || course.code === 'OECMT72N' || course.code === 'UEHUT704')) return true;
+    if (course.slot === 'A' || course.slot === 'B' || course.slot === 'O' || course.slot === 'I') return true;
+    if (course.type === 'PEC' || course.type === 'OEC' || course.type === 'HMC') return true;
+    return false;
+  }
+
+  // S8: One OE, One Level-3 PE Course, HMC (OB & Business Communication)
+  if (semNumber === 8) {
+    if (course.code && (course.code === 'PECMT86N' || course.code === 'OECMT83N' || course.code === 'UEHUT803')) return true;
+    if (course.slot === 'A' || course.slot === 'O' || course.slot === 'I') return true;
+    if (course.type === 'PEC' || course.type === 'OEC' || course.type === 'HMC') return true;
+    return false;
+  }
+
+  return false;
+}
+
+export function enrichCourseChallengeInfo(course: Course, semNumber: number): Course {
+  const challengeable = isCourseChallengeable(course, semNumber);
+  if (!challengeable) {
+    return {
+      ...course,
+      canChallenge: false,
+      isChallenged: false, // Ensure courses not eligible for challenge are never in a challenged state
+    };
+  }
+
+  let precedingSem = course.precedingSem;
+  if (!precedingSem) {
+    if (semNumber === 2) precedingSem = 'S1';
+    else if (semNumber === 3) precedingSem = 'S2';
+    else if (semNumber === 4) precedingSem = 'S3';
+    else if (semNumber === 7 && course.type === 'HMC') precedingSem = 'S4/S5/S6';
+    else if (semNumber === 7) precedingSem = 'S5/S6';
+    else if (semNumber === 8 && course.type === 'HMC') precedingSem = 'S4/S5/S6/S7';
+    else if (semNumber === 8) precedingSem = 'S5/S6/S7';
+  }
+
+  return {
+    ...course,
+    canChallenge: true,
+    precedingSem,
+  };
+}
+
+export function normalizeInstances(instances: Record<string, Instance>): Record<string, Instance> {
+  const result: Record<string, Instance> = {};
+  for (const [id, inst] of Object.entries(instances)) {
+    if (!inst || !inst.semesters) {
+      result[id] = inst;
+      continue;
+    }
+    const semesters: Record<number, SemesterData> = {};
+    for (const [semStr, sem] of Object.entries(inst.semesters)) {
+      const semNum = Number(semStr);
+      if (!sem || !sem.courses) {
+        semesters[semNum] = sem;
+        continue;
+      }
+      semesters[semNum] = {
+        ...sem,
+        courses: sem.courses.map((c) => enrichCourseChallengeInfo(c, semNum)),
+      };
+    }
+    result[id] = {
+      ...inst,
+      semesters,
+    };
+  }
+  return result;
+}
+
 /**
  * KTU 2024 Scheme Marks to Grade Conversion
  * Rules:
